@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { User, AttendanceRecord, IdleRecord } from '../types';
+import type { User, AttendanceRecord, IdleRecord, IncidentReport } from '../types';
 import { supabase } from '../services/supabaseClient';
 import SummaryCards from './SummaryCards';
 import HistoryTable from './HistoryTable';
 import IdleHistoryTable from './IdleHistoryTable';
+import IncidentReports from './IncidentReports';
 import DateFilter from './DateFilter';
 import RealTimeClock from './RealTimeClock';
 import IdleAlarm from './IdleAlarm';
@@ -22,6 +24,7 @@ const SYSTEM_INTERRUPTION_NOTE = 'System clock out due to interruption';
 const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [idleRecords, setIdleRecords] = useState<IdleRecord[]>([]);
+  const [incidentReports, setIncidentReports] = useState<IncidentReport[]>([]);
   const [isClockedIn, setIsClockedIn] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +32,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isConfirmingSignOut, setIsConfirmingSignOut] = useState(false);
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
-  const [activeTab, setActiveTab] = useState<'attendance' | 'idle'>('attendance');
+  const [activeTab, setActiveTab] = useState<'attendance' | 'idle' | 'incidents'>('attendance');
   const [showOfflineWarning, setShowOfflineWarning] = useState<boolean>(false);
   const offlineSinceRef = useRef<Date | null>(null);
 
@@ -37,8 +40,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Fetch both attendance and idle records concurrently
-      const [attendanceRes, idleRes] = await Promise.all([
+      // Fetch all user-related records concurrently
+      const [attendanceRes, idleRes, incidentsRes] = await Promise.all([
         supabase
           .from('attendance')
           .select('*')
@@ -49,14 +52,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           .select('*')
           .eq('user_id', user.userid)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('incident_reports')
+          .select('*')
+          .eq('user_id', user.userid)
+          .order('created_at', { ascending: false }),
       ]);
       
       if (attendanceRes.error) throw attendanceRes.error;
       if (idleRes.error) throw idleRes.error;
+      if (incidentsRes.error) throw incidentsRes.error;
 
       const safeAttendanceData = attendanceRes.data || [];
       setRecords(safeAttendanceData);
       setIdleRecords(idleRes.data || []);
+      setIncidentReports(incidentsRes.data || []);
 
       if (safeAttendanceData.length > 0) {
         const latestRecord = safeAttendanceData[0];
@@ -373,7 +383,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     </header>
   );
 
-  const TabButton: React.FC<{tabName: 'attendance' | 'idle', label: string}> = ({tabName, label}) => {
+  const TabButton: React.FC<{tabName: 'attendance' | 'idle' | 'incidents', label: string}> = ({tabName, label}) => {
     const isActive = activeTab === tabName;
     return (
         <button
@@ -389,6 +399,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         </button>
     )
   }
+  
+  const ActiveTabTitle = () => {
+    switch(activeTab) {
+      case 'attendance': return 'Attendance History';
+      case 'idle': return 'Idle Time History';
+      case 'incidents': return 'Incident Reports';
+      default: return 'History';
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -446,26 +465,27 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 <div className="bg-white p-4 sm:p-6 rounded-xl border border-border-color shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                         <h2 className="text-xl font-semibold text-text-primary">
-                            {activeTab === 'attendance' ? 'Attendance History' : 'Idle Time History'}
+                            <ActiveTabTitle />
                         </h2>
-                        <ClockButtons 
-                            user={user} 
-                            isClockedIn={isClockedIn} 
-                            onUpdate={fetchData}
-                        />
+                        {activeTab !== 'incidents' && (
+                             <ClockButtons 
+                                user={user} 
+                                isClockedIn={isClockedIn} 
+                                onUpdate={fetchData}
+                            />
+                        )}
                     </div>
                     <div className="border-b border-border-color">
                         <nav className="-mb-px flex space-x-6" aria-label="Tabs">
                             <TabButton tabName="attendance" label="Attendance" />
                             <TabButton tabName="idle" label="Idle Time" />
+                            <TabButton tabName="incidents" label="Incident Reports" />
                         </nav>
                     </div>
                     <div className="mt-4">
-                        {activeTab === 'attendance' ? (
-                            <HistoryTable records={filteredRecords} />
-                        ) : (
-                            <IdleHistoryTable records={filteredIdleRecords} />
-                        )}
+                        {activeTab === 'attendance' && <HistoryTable records={filteredRecords} />}
+                        {activeTab === 'idle' && <IdleHistoryTable records={filteredIdleRecords} />}
+                        {activeTab === 'incidents' && <IncidentReports user={user} initialReports={incidentReports} onUpdate={fetchData} />}
                     </div>
                 </div>
             </>

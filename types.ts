@@ -14,6 +14,7 @@ export interface AttendanceRecord {
   clock_out: string | null;
   total_time: string | null;
   created_at: string;
+  notes: string | null; // Added for session notes
 }
 
 export interface IdleRecord {
@@ -24,6 +25,17 @@ export interface IdleRecord {
   idle_end: string | null;
   duration_seconds: number | null;
   created_at: string;
+}
+
+export interface IncidentReport {
+    id: string;
+    created_at: string;
+    user_id: string;
+    user_name: string;
+    subject: string;
+    body: string;
+    image_url: string | null;
+    status: 'submitted' | 'in_progress' | 'resolved';
 }
 
 // Basic Supabase schema typing for better type safety
@@ -45,6 +57,11 @@ export interface Database {
         Insert: Omit<IdleRecord, 'id' | 'created_at'>;
         Update: Partial<Omit<IdleRecord, 'id' | 'user_id' | 'attendance_id' | 'created_at'>>;
       };
+      incident_reports: {
+        Row: IncidentReport;
+        Insert: Omit<IncidentReport, 'id' | 'created_at'>;
+        Update: Partial<Omit<IncidentReport, 'id' | 'user_id'>>;
+      }
     };
   };
 }
