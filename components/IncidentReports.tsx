@@ -33,7 +33,7 @@ const ReportCard: React.FC<{ report: IncidentReport }> = ({ report }) => (
             <StatusBadge status={report.status} />
         </div>
         <p className="text-sm text-text-secondary mt-1">
-            Filed on: {formatDisplayDate(report.created_at)}
+            Incident Date: {formatDisplayDate(report.incident_date)}
         </p>
         <p className="text-sm text-text-primary mt-3 whitespace-pre-wrap break-words">
             {report.body}
@@ -48,53 +48,62 @@ const ReportCard: React.FC<{ report: IncidentReport }> = ({ report }) => (
     </div>
 );
 
-
-// Incident Report Form Component
-const ReportForm: React.FC<{
+// New Multi-Step Workflow Component
+const IncidentReportWorkflow: React.FC<{
     user: User;
     onCancel: () => void;
     onSubmitSuccess: () => void;
 }> = ({ user, onCancel, onSubmitSuccess }) => {
-    const [subject, setSubject] = useState('');
-    const [body, setBody] = useState('');
+    const [step, setStep] = useState(1);
+    const [formData, setFormData] = useState({
+        incident_date: '',
+        subject: '',
+        body: '',
+        work_hours: '',
+    });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const steps = ['Details', 'Explanation', 'Evidence', 'Review'];
+
+    const handleNext = () => setStep(prev => prev + 1);
+    const handleBack = () => setStep(prev => prev - 1);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Basic validation
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                setError('File size cannot exceed 5MB.');
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                setError('File size must be under 5MB.');
                 return;
             }
-            if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-                setError('Only JPG, PNG, and GIF files are allowed.');
+            if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                setError('Only JPG and PNG files are allowed.');
                 return;
             }
-
             setError(null);
             setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            setImagePreview(URL.createObjectURL(file));
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!subject.trim() || !body.trim()) {
-            setError('Subject and body are required.');
-            return;
+    const isStepValid = () => {
+        switch(step) {
+            case 1: return formData.incident_date.trim() !== '' && formData.subject.trim() !== '';
+            case 2: return formData.body.trim() !== '';
+            default: return true;
         }
-
+    };
+    
+    const handleSubmit = async () => {
         setIsLoading(true);
         setError(null);
-        
         try {
             let imageUrl: string | null = null;
             if (imageFile) {
@@ -106,104 +115,197 @@ const ReportForm: React.FC<{
                     .from('incident-images')
                     .upload(filePath, imageFile);
 
-                if (uploadError) {
-                    throw new Error(`Image upload failed: ${uploadError.message}`);
-                }
+                if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
                 
-                const { data } = supabase.storage
-                    .from('incident-images')
-                    .getPublicUrl(filePath);
-                
+                const { data } = supabase.storage.from('incident-images').getPublicUrl(filePath);
                 imageUrl = data.publicUrl;
             }
 
             const { error: insertError } = await supabase.from('incident_reports').insert({
                 user_id: user.userid,
                 user_name: user.name,
-                subject: subject.trim(),
-                body: body.trim(),
+                subject: formData.subject.trim(),
+                body: formData.body.trim(),
+                incident_date: formData.incident_date,
+                work_hours: formData.work_hours ? parseInt(formData.work_hours, 10) : null,
                 image_url: imageUrl,
                 status: 'submitted',
             });
 
             if (insertError) throw insertError;
-
             onSubmitSuccess();
-
         } catch (err: any) {
             console.error(err);
-            setError(err.message || 'Failed to submit report. Please try again.');
+            setError(err.message || 'Failed to submit report.');
         } finally {
             setIsLoading(false);
         }
     };
 
+    const ProgressBar = () => (
+        <div className="mb-10 w-full">
+            <div className="flex items-center">
+                {steps.map((s, index) => {
+                    const isCompleted = step > index + 1;
+                    const isActive = step === index + 1;
+                    const isLastStep = index === steps.length - 1;
+
+                    return (
+                        <React.Fragment key={s}>
+                            <div className="flex flex-col items-center">
+                                <div
+                                    className={`
+                                        flex items-center justify-center w-10 h-10 rounded-full text-lg font-bold transition-all duration-300
+                                        ${isCompleted ? 'bg-primary text-white' : ''}
+                                        ${isActive ? 'bg-primary text-white ring-4 ring-primary/30' : ''}
+                                        ${!isCompleted && !isActive ? 'bg-gray-200 text-text-secondary' : ''}
+                                    `}
+                                >
+                                    {isCompleted ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : (
+                                        <span>{index + 1}</span>
+                                    )}
+                                </div>
+                                <p className={`mt-2 text-xs w-20 text-center font-semibold ${isActive || isCompleted ? 'text-primary' : 'text-text-secondary'}`}>
+                                    {s}
+                                </p>
+                            </div>
+                            {!isLastStep && (
+                                <div className={`flex-1 h-1 rounded transition-all duration-300 ${step > index + 1 ? 'bg-primary' : 'bg-gray-200'}`}></div>
+                            )}
+                        </React.Fragment>
+                    );
+                })}
+            </div>
+        </div>
+    );
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in-scale">
-            <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-text-secondary mb-1">
-                    Subject
-                </label>
-                <input
-                    id="subject"
-                    type="text"
-                    required
-                    maxLength={100}
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    className="w-full px-4 py-3 bg-input-bg border border-border-color rounded-md text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                />
-            </div>
-            <div>
-                <label htmlFor="body" className="block text-sm font-medium text-text-secondary mb-1">
-                    Details of Incident
-                </label>
-                <textarea
-                    id="body"
-                    required
-                    rows={5}
-                    maxLength={1000}
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    className="w-full px-4 py-3 bg-input-bg border border-border-color rounded-md text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                />
-            </div>
-            <div>
-                <label htmlFor="image" className="block text-sm font-medium text-text-secondary mb-1">
-                    Attach an Image (Optional)
-                </label>
-                <input
-                    id="image"
-                    type="file"
-                    accept="image/png, image/jpeg, image/gif"
-                    onChange={handleFileChange}
-                    className="w-full text-sm text-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-icon-bg file:text-primary hover:file:bg-primary/20"
-                />
-                {imagePreview && (
-                    <div className="mt-4">
-                        <img src={imagePreview} alt="Image preview" className="max-h-40 rounded-lg border border-border-color" />
+        <div className="animate-fade-in-scale p-4 sm:p-8 border border-border-color rounded-xl bg-white shadow-lg">
+            <h3 className="text-lg font-bold text-text-primary mb-2 text-center">File Incident Report</h3>
+            <p className="text-sm text-text-secondary mb-6 text-center">Follow the steps below to complete your report.</p>
+
+            <ProgressBar />
+            
+            <div className="space-y-6">
+                {step === 1 && (
+                    <div className="space-y-4 animate-fade-in-scale">
+                         <div>
+                            <label htmlFor="incident_date" className="block text-sm font-medium text-text-secondary mb-1">Date of Incident</label>
+                            <input type="date" name="incident_date" id="incident_date" value={formData.incident_date} onChange={handleInputChange} required className="input-field" />
+                        </div>
+                        <div>
+                            <label htmlFor="subject" className="block text-sm font-medium text-text-secondary mb-1">Subject</label>
+                            <input type="text" name="subject" id="subject" value={formData.subject} onChange={handleInputChange} required maxLength={100} className="input-field" />
+                        </div>
                     </div>
                 )}
+                {step === 2 && (
+                     <div className="space-y-4 animate-fade-in-scale">
+                        <div>
+                            <label htmlFor="body" className="block text-sm font-medium text-text-secondary mb-1">Details of Incident</label>
+                            <textarea name="body" id="body" value={formData.body} onChange={handleInputChange} required rows={5} maxLength={1000} className="input-field" />
+                        </div>
+                        <div>
+                            <label htmlFor="work_hours" className="block text-sm font-medium text-text-secondary mb-1">Approximate Hours Worked (Optional)</label>
+                            <input type="number" name="work_hours" id="work_hours" value={formData.work_hours} onChange={handleInputChange} min="0" step="0.5" className="input-field" />
+                        </div>
+                    </div>
+                )}
+                {step === 3 && (
+                     <div className="animate-fade-in-scale">
+                        <label htmlFor="image" className="block text-sm font-medium text-text-secondary mb-1">Attach an Image (Optional)</label>
+                        <input type="file" id="image" accept="image/png, image/jpeg" onChange={handleFileChange} className="w-full text-sm text-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-icon-bg file:text-primary hover:file:bg-primary/20" />
+                        {imagePreview && <img src={imagePreview} alt="Preview" className="mt-4 max-h-40 rounded-lg border border-border-color" />}
+                    </div>
+                )}
+                 {step === 4 && (
+                     <div className="space-y-4 animate-fade-in-scale bg-gray-50 p-4 rounded-md border border-border-color">
+                        <h4 className="font-bold text-text-primary">Review Your Report</h4>
+                        <div className="text-sm space-y-2">
+                           <p><strong className="text-text-secondary">Date:</strong> {formatDisplayDate(formData.incident_date)}</p>
+                           <p><strong className="text-text-secondary">Subject:</strong> {formData.subject}</p>
+                           <p><strong className="text-text-secondary">Details:</strong> <span className="whitespace-pre-wrap">{formData.body}</span></p>
+                           <p><strong className="text-text-secondary">Hours Worked:</strong> {formData.work_hours || 'N/A'}</p>
+                           {imagePreview && <div><strong className="text-text-secondary">Evidence:</strong><img src={imagePreview} alt="Evidence" className="mt-2 max-h-40 rounded-lg"/></div>}
+                        </div>
+                    </div>
+                )}
+
+                {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+
+                <div className="mt-8 flex justify-between items-center">
+                    <div>
+                        {step > 1 && (
+                            <button onClick={handleBack} disabled={isLoading} className="secondary-button">Back</button>
+                        )}
+                        {step === 1 && (
+                             <button onClick={onCancel} disabled={isLoading} className="secondary-button">Cancel</button>
+                        )}
+                    </div>
+                    <div>
+                        {step < steps.length && (
+                            <button onClick={handleNext} disabled={!isStepValid()} className="primary-button">Next</button>
+                        )}
+                        {step === steps.length && (
+                            <button onClick={handleSubmit} disabled={isLoading} className="primary-button">
+                                {isLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Submit Report'}
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
-            {error && <p className="text-sm text-red-600 text-center">{error}</p>}
-            <div className="flex flex-col sm:flex-row-reverse justify-start gap-4">
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full sm:w-auto flex justify-center py-3 px-6 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {isLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Submit Report'}
-                </button>
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    disabled={isLoading}
-                    className="w-full sm:w-auto flex justify-center py-3 px-6 border border-border-color rounded-md shadow-sm text-sm font-bold text-text-secondary bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50"
-                >
-                    Cancel
-                </button>
-            </div>
-        </form>
+            <style>{`
+                .input-field {
+                    width: 100%;
+                    padding: 0.75rem 1rem;
+                    background-color: #F3EFE0;
+                    border: 1px solid #E5E7EB;
+                    border-radius: 0.375rem;
+                    color: #1F2937;
+                    transition: all 0.2s;
+                }
+                .input-field:focus {
+                    outline: none;
+                    box-shadow: 0 0 0 2px #046241;
+                    border-color: transparent;
+                }
+                .primary-button {
+                    display: inline-flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 0.75rem 1.5rem;
+                    border: 1px solid transparent;
+                    border-radius: 0.375rem;
+                    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+                    font-size: 0.875rem;
+                    font-weight: 700;
+                    color: white;
+                    background-color: #046241;
+                    transition: background-color 0.2s;
+                }
+                .primary-button:hover { background-color: #057A55; }
+                .primary-button:disabled { opacity: 0.5; cursor: not-allowed; }
+                .secondary-button {
+                    display: inline-flex;
+                    justify-content: center;
+                    padding: 0.75rem 1.5rem;
+                    border: 1px solid #E5E7EB;
+                    border-radius: 0.375rem;
+                    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+                    font-size: 0.875rem;
+                    font-weight: 700;
+                    color: #6B7281;
+                    background-color: white;
+                    transition: background-color 0.2s;
+                }
+                .secondary-button:hover { background-color: #F9FAFB; }
+                .secondary-button:disabled { opacity: 0.5; cursor: not-allowed; }
+            `}</style>
+        </div>
     );
 };
 
@@ -252,7 +354,7 @@ const IncidentReports: React.FC<IncidentReportsProps> = ({ user, initialReports,
                     )}
                 </div>
             ) : (
-                <ReportForm user={user} onCancel={() => setView('list')} onSubmitSuccess={handleFormSubmitSuccess} />
+                <IncidentReportWorkflow user={user} onCancel={() => setView('list')} onSubmitSuccess={handleFormSubmitSuccess} />
             )}
         </div>
     );
