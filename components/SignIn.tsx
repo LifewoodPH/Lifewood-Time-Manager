@@ -67,62 +67,70 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-text-primary">LifeTime</h1>
-        <p className="text-text-secondary">Lifewood Time Manager</p>
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="flex-grow flex flex-col items-center justify-center p-4">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-text-primary">LifeTime</h1>
+          <p className="text-text-secondary">Lifewood Time Manager</p>
+        </div>
+        <div className="w-full max-w-sm p-8 space-y-6 bg-white rounded-xl shadow-lg border border-border-color">
+          <form onSubmit={handleSignIn} className="space-y-6">
+            <div>
+              <label htmlFor="userid" className="block text-sm font-medium text-text-secondary mb-1">
+                User ID
+              </label>
+              <input
+                id="userid"
+                name="userid"
+                type="text"
+                autoComplete="username"
+                required
+                value={userid}
+                onChange={(e) => setUserid(e.target.value)}
+                className="w-full px-4 py-3 bg-input-bg border border-border-color rounded-md text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-input-bg border border-border-color rounded-md text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+              />
+            </div>
+
+            {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-      <div className="w-full max-w-sm p-8 space-y-6 bg-white rounded-xl shadow-lg border border-border-color">
-        <form onSubmit={handleSignIn} className="space-y-6">
-          <div>
-            <label htmlFor="userid" className="block text-sm font-medium text-text-secondary mb-1">
-              User ID
-            </label>
-            <input
-              id="userid"
-              name="userid"
-              type="text"
-              autoComplete="username"
-              required
-              value={userid}
-              onChange={(e) => setUserid(e.target.value)}
-              className="w-full px-4 py-3 bg-input-bg border border-border-color rounded-md text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-input-bg border border-border-color rounded-md text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-            />
-          </div>
-
-          {error && <p className="text-sm text-red-600 text-center">{error}</p>}
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                'Sign In'
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+      <footer className="w-full p-4 flex justify-center items-center bg-transparent">
+         {/* Assuming standard Vite setup where imports work or referencing via /Public if handled by server. 
+             Since 'Public' is a folder at root but likely not the 'public' folder served at root by Vite default (which is usually lowercase 'public'), 
+             referencing by relative path is safer if we want it bundled. */}
+          <img src="/Public/logof.jpeg" alt="Logo" className="h-16 w-auto object-contain" />
+      </footer>
     </div>
   );
 };
