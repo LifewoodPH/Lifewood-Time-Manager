@@ -71,7 +71,10 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
     <div className="flex flex-col min-h-screen bg-background items-center justify-center p-4">
       <div className="flex flex-col items-center justify-center w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-text-primary">LifeTime</h1>
+          <h1 className="text-4xl font-bold">
+            <span className="text-primary">Life</span>
+            <span className="text-accent">Time</span>
+          </h1>
           <p className="text-text-secondary">Lifewood Time Manager</p>
         </div>
         <div className="w-full p-8 space-y-6 bg-white rounded-xl shadow-lg border border-border-color">
