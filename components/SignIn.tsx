@@ -129,7 +129,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
           </form>
         </div>
       </div>
-      <footer className="flex flex-col justify-center items-center bg-transparent mt-2">
+      <footer className="flex flex-col justify-center items-center bg-transparent mt-3">
         <div className="bg-white border border-border-color rounded-lg px-6 py-2 shadow-sm flex items-center justify-center mb-2">
           <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
         </div>
