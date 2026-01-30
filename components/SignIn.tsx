@@ -68,13 +68,13 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <div className="flex-grow flex flex-col items-center justify-center p-4">
+    <div className="flex flex-col min-h-screen bg-background items-center justify-center p-4">
+      <div className="flex flex-col items-center justify-center w-full max-w-sm mb-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-text-primary">LifeTime</h1>
           <p className="text-text-secondary">Lifewood Time Manager</p>
         </div>
-        <div className="w-full max-w-sm p-8 space-y-6 bg-white rounded-xl shadow-lg border border-border-color">
+        <div className="w-full p-8 space-y-6 bg-white rounded-xl shadow-lg border border-border-color">
           <form onSubmit={handleSignIn} className="space-y-6">
             <div>
               <label htmlFor="userid" className="block text-sm font-medium text-text-secondary mb-1">
@@ -126,7 +126,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
           </form>
         </div>
       </div>
-      <footer className="w-full p-4 flex flex-col justify-center items-center bg-transparent">
+      <footer className="flex flex-col justify-center items-center bg-transparent mt-4">
         <div className="bg-white border border-border-color rounded-lg px-6 py-2 shadow-sm flex items-center justify-center mb-2">
           <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
         </div>
