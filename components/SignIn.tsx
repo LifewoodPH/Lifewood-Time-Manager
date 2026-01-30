@@ -127,7 +127,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
         </div>
       </div>
       <footer className="w-full p-4 flex justify-center items-center bg-transparent">
-        <img src={logo} alt="Logo" className="h-16 w-auto object-contain" />
+        <img src={logo} alt="Logo" className="h-10 w-auto object-contain" />
       </footer>
     </div>
   );
