@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { User } from '../types';
+import logo from '../Public/logof.jpeg';
 
 interface SignInProps {
   onLogin: (user: User) => void;
@@ -126,10 +127,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
         </div>
       </div>
       <footer className="w-full p-4 flex justify-center items-center bg-transparent">
-         {/* Assuming standard Vite setup where imports work or referencing via /Public if handled by server. 
-             Since 'Public' is a folder at root but likely not the 'public' folder served at root by Vite default (which is usually lowercase 'public'), 
-             referencing by relative path is safer if we want it bundled. */}
-          <img src="/Public/logof.jpeg" alt="Logo" className="h-16 w-auto object-contain" />
+        <img src={logo} alt="Logo" className="h-16 w-auto object-contain" />
       </footer>
     </div>
   );
