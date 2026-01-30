@@ -126,8 +126,11 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
           </form>
         </div>
       </div>
-      <footer className="w-full p-4 flex justify-center items-center bg-transparent">
-        <img src={logo} alt="Logo" className="h-10 w-auto object-contain" />
+      <footer className="w-full p-4 flex flex-col justify-center items-center bg-transparent">
+        <div className="bg-white border border-border-color rounded-lg px-8 py-4 shadow-sm flex items-center justify-center mb-4">
+          <img src={logo} alt="Logo" className="h-10 w-auto object-contain" />
+        </div>
+        <p className="text-xs text-text-secondary">Powered by Lifewood PH</p>
       </footer>
     </div>
   );
