@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { User, AttendanceRecord, IdleRecord, IncidentReport } from '../types';
 import { supabase } from '../services/supabaseClient';
+import logo from '../Public/logof.jpeg';
 import SummaryCards from './SummaryCards';
 import HistoryTable from './HistoryTable';
 import IdleHistoryTable from './IdleHistoryTable';
@@ -58,7 +59,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           .eq('user_id', user.userid)
           .order('created_at', { ascending: false }),
       ]);
-      
+
       if (attendanceRes.error) throw attendanceRes.error;
       if (idleRes.error) throw idleRes.error;
       if (incidentsRes.error) throw incidentsRes.error;
@@ -101,9 +102,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         }, 1000);
       }
     } else {
-        setElapsedTime(null);
+      setElapsedTime(null);
     }
-    
+
     return () => {
       if (timer) {
         clearInterval(timer);
@@ -146,14 +147,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         const supabaseUrl = 'https://szifmsvutxcrcwfjbvsi.supabase.co';
         const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aWZtc3Z1dHhjcmN3ZmpidnNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjcwNzEsImV4cCI6MjA3NTYwMzA3MX0.hvZKMI0NDQ8IdWaDonqmiyvQu-NkCN0nRHPjn0isoCA';
         const updateUrl = `${supabaseUrl}/rest/v1/attendance?id=eq.${openRecord.id}`;
-        
+
         const headers = {
           'apikey': supabaseAnonKey,
           'Authorization': `Bearer ${supabaseAnonKey}`, // Use anon key
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal',
         };
-        
+
         // Use `fetch` with `keepalive: true` to ensure the request is sent
         // even after the page is closed/hidden. This is a "fire and forget" request.
         try {
@@ -217,83 +218,83 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       performSignOut();
     }
   };
-  
+
   const handleForceClockOut = async (note: string, clockOutDate: Date = new Date()) => {
     const openRecord = records.find(r => r.clock_out === null);
     if (!openRecord) {
-        console.warn("Attempted to force clock out, but no open record was found.");
-        return;
+      console.warn("Attempted to force clock out, but no open record was found.");
+      return;
     }
-    
+
     setError(null);
     try {
-        const clockOutTime = formatDateForDB(clockOutDate);
-        const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
+      const clockOutTime = formatDateForDB(clockOutDate);
+      const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
 
-        const { error: updateError } = await supabase
-            .from('attendance')
-            .update({
-              clock_out: clockOutTime,
-              total_time: totalTime,
-              notes: note.trim(),
-            })
-            .eq('id', openRecord.id);
-            
-        if (updateError) throw updateError;
-        
-        // After successfully clocking out, refresh all data
-        await fetchData();
+      const { error: updateError } = await supabase
+        .from('attendance')
+        .update({
+          clock_out: clockOutTime,
+          total_time: totalTime,
+          notes: note.trim(),
+        })
+        .eq('id', openRecord.id);
+
+      if (updateError) throw updateError;
+
+      // After successfully clocking out, refresh all data
+      await fetchData();
 
     } catch (err: any) {
-        const message = (err && typeof (err as any).message === 'string')
-            ? (err as any).message
-            : 'An unexpected error occurred during automatic clock-out.';
-        setError(message);
-        console.error(err);
+      const message = (err && typeof (err as any).message === 'string')
+        ? (err as any).message
+        : 'An unexpected error occurred during automatic clock-out.';
+      setError(message);
+      console.error(err);
     }
   };
 
   // Effect to handle online/offline status for automatic clock-out
   useEffect(() => {
     const handleOnline = () => {
-        setShowOfflineWarning(false);
-        
-        if (offlineSinceRef.current && isClockedIn) {
-            const offlineDuration = new Date().getTime() - offlineSinceRef.current.getTime();
-            if (offlineDuration >= OFFLINE_CLOCK_OUT_THRESHOLD_MS) {
-                console.log(`Offline for ${offlineDuration / 1000}s. Auto-clocking out.`);
-                handleForceClockOut(
-                    SYSTEM_INTERRUPTION_NOTE,
-                    offlineSinceRef.current // Use the time when connection was lost
-                );
-            }
+      setShowOfflineWarning(false);
+
+      if (offlineSinceRef.current && isClockedIn) {
+        const offlineDuration = new Date().getTime() - offlineSinceRef.current.getTime();
+        if (offlineDuration >= OFFLINE_CLOCK_OUT_THRESHOLD_MS) {
+          console.log(`Offline for ${offlineDuration / 1000}s. Auto-clocking out.`);
+          handleForceClockOut(
+            SYSTEM_INTERRUPTION_NOTE,
+            offlineSinceRef.current // Use the time when connection was lost
+          );
         }
-        // Always reset the ref on reconnection
-        offlineSinceRef.current = null;
+      }
+      // Always reset the ref on reconnection
+      offlineSinceRef.current = null;
     };
 
     const handleOffline = () => {
-        if (isClockedIn) {
-            setShowOfflineWarning(true);
-            // Only set the timestamp if it's the first time we've detected being offline
-            if (!offlineSinceRef.current) {
-                offlineSinceRef.current = new Date();
-                console.log('Connection lost, started offline timer at:', offlineSinceRef.current);
-            }
+      if (isClockedIn) {
+        setShowOfflineWarning(true);
+        // Only set the timestamp if it's the first time we've detected being offline
+        if (!offlineSinceRef.current) {
+          offlineSinceRef.current = new Date();
+          console.log('Connection lost, started offline timer at:', offlineSinceRef.current);
         }
+      }
     };
-    
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     // Initial check in case the app loads while offline
     if (!navigator.onLine) {
-        handleOffline();
+      handleOffline();
     }
-    
+
     return () => {
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, [isClockedIn, fetchData]);
 
@@ -306,14 +307,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
     let startDate: Date | null = null;
     if (start) {
-        const [year, month, day] = start.split('-').map(Number);
-        startDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+      const [year, month, day] = start.split('-').map(Number);
+      startDate = new Date(year, month - 1, day, 0, 0, 0, 0);
     }
-    
+
     let endDate: Date | null = null;
     if (end) {
-        const [year, month, day] = end.split('-').map(Number);
-        endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+      const [year, month, day] = end.split('-').map(Number);
+      endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
     }
 
     return recordsToFilter.filter(record => {
@@ -332,7 +333,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   }, [records, dateRange]);
 
   const filteredIdleRecords = useMemo(() => {
-     return filterRecordsByDateRange<IdleRecord>(idleRecords, dateRange);
+    return filterRecordsByDateRange<IdleRecord>(idleRecords, dateRange);
   }, [idleRecords, dateRange]);
 
 
@@ -350,8 +351,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     const endDate = end ? new Date(end).toLocaleDateString('en-US', options) : null;
 
     if (startDate && endDate) {
-        if (startDate === endDate) return startDate;
-        return `${startDate} to ${endDate}`;
+      if (startDate === endDate) return startDate;
+      return `${startDate} to ${endDate}`;
     }
     if (startDate) return `from ${startDate}`;
     if (endDate) return `until ${endDate}`;
@@ -366,42 +367,60 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
   const Header = () => (
     <header className="flex items-center justify-between p-4 bg-white border-b border-border-color shadow-sm sticky top-0 z-10">
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-3 flex-1">
         <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         <div>
-            <h1 className="text-xl font-bold text-text-primary">LifeTime</h1>
-            <p className="text-sm text-text-secondary">Welcome, {user.name}!</p>
+          <h1 className="text-xl font-bold text-text-primary">LifeTime</h1>
+          <p className="text-sm text-text-secondary">Welcome, {user.name}!</p>
         </div>
       </div>
-      <button
-        onClick={() => setIsConfirmingSignOut(true)}
-        disabled={isLoggingOut}
-        className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50"
-      >
-        Sign Out
-      </button>
+
+      <div className="flex justify-center flex-shrink-0 px-4">
+        <img src={logo} alt="Lifewood Logo" className="h-10 w-auto object-contain" />
+      </div>
+
+      <div className="flex justify-end flex-1">
+        <button
+          onClick={() => setIsConfirmingSignOut(true)}
+          disabled={isLoggingOut}
+          className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50"
+        >
+          Sign Out
+        </button>
+      </div>
     </header>
   );
 
-  const TabButton: React.FC<{tabName: 'attendance' | 'idle' | 'incidents', label: string}> = ({tabName, label}) => {
+  const Footer = () => (
+    <footer className="flex flex-col justify-center items-center bg-transparent mt-auto py-6 border-t border-gray-100">
+      <div className="bg-white border border-border-color rounded-lg px-6 py-2 shadow-sm flex items-center justify-center mb-2">
+        <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
+      </div>
+      <p className="text-xs font-bold">
+        <span className="text-primary">Powered by </span>
+        <span className="text-accent">Lifewood PH</span>
+      </p>
+    </footer>
+  );
+
+  const TabButton: React.FC<{ tabName: 'attendance' | 'idle' | 'incidents', label: string }> = ({ tabName, label }) => {
     const isActive = activeTab === tabName;
     return (
-        <button
-            onClick={() => setActiveTab(tabName)}
-            className={`px-4 py-2 text-sm font-semibold rounded-t-md transition-colors focus:outline-none ${
-                isActive 
-                ? 'border-b-2 border-primary text-primary'
-                : 'text-text-secondary hover:text-text-primary'
-            }`}
-            aria-current={isActive ? 'page' : undefined}
-        >
-            {label}
-        </button>
+      <button
+        onClick={() => setActiveTab(tabName)}
+        className={`px-4 py-2 text-sm font-semibold rounded-t-md transition-colors focus:outline-none ${isActive
+            ? 'border-b-2 border-primary text-primary'
+            : 'text-text-secondary hover:text-text-primary'
+          }`}
+        aria-current={isActive ? 'page' : undefined}
+      >
+        {label}
+      </button>
     )
   }
-  
+
   const ActiveTabTitle = () => {
-    switch(activeTab) {
+    switch (activeTab) {
       case 'attendance': return 'Attendance History';
       case 'idle': return 'Idle Time History';
       case 'incidents': return 'Incident Reports';
@@ -410,39 +429,39 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="p-4 sm:p-6 lg:p-8">
+      <main className="p-4 sm:p-6 lg:p-8 flex-grow">
         <div className="max-w-7xl mx-auto space-y-8">
-          
+
           {showOfflineWarning && (
             <div className="p-4 text-center text-amber-800 bg-amber-100 border border-amber-200 rounded-lg flex items-center justify-center space-x-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span>
-                    Connection lost. If you remain offline for over 5 minutes, you will be automatically clocked out.
-                </span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>
+                Connection lost. If you remain offline for over 5 minutes, you will be automatically clocked out.
+              </span>
             </div>
           )}
           {error && <div className="p-4 text-center text-red-700 bg-red-100 border border-red-200 rounded-lg">{error}</div>}
 
           {isLoading ? (
-             <div className="flex justify-center items-center h-64">
-                <div className="w-12 h-12 border-4 border-accent border-dashed rounded-full animate-spin"></div>
-             </div>
+            <div className="flex justify-center items-center h-64">
+              <div className="w-12 h-12 border-4 border-accent border-dashed rounded-full animate-spin"></div>
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                  <div className="lg:col-span-2">
-                    <SummaryCards records={records} />
-                  </div>
-                  <div className="lg:col-span-1">
-                     <RealTimeClock elapsedTime={elapsedTime} />
-                  </div>
+                <div className="lg:col-span-2">
+                  <SummaryCards records={records} />
+                </div>
+                <div className="lg:col-span-1">
+                  <RealTimeClock elapsedTime={elapsedTime} />
+                </div>
               </div>
 
-              <DateFilter 
+              <DateFilter
                 dateRange={dateRange}
                 onDateRangeChange={setDateRange}
                 onClear={() => setDateRange({ start: '', end: '' })}
@@ -450,49 +469,50 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
               {(dateRange.start || dateRange.end) && (
                 <div className="bg-white p-6 rounded-xl border border-primary-hover shadow-lg flex items-center space-x-4">
-                     <div className="p-3 rounded-full bg-icon-bg">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                     </div>
-                     <div>
-                        <p className="text-text-secondary text-sm">
-                            Total time for {formatDateRangeForDisplay(dateRange.start, dateRange.end)}
-                        </p>
-                        <p className="text-2xl font-bold text-text-primary">{filteredDateSummary}</p>
-                     </div>
+                  <div className="p-3 rounded-full bg-icon-bg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-sm">
+                      Total time for {formatDateRangeForDisplay(dateRange.start, dateRange.end)}
+                    </p>
+                    <p className="text-2xl font-bold text-text-primary">{filteredDateSummary}</p>
+                  </div>
                 </div>
               )}
-              
-                <div className="bg-white p-4 sm:p-6 rounded-xl border border-border-color shadow-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                        <h2 className="text-xl font-semibold text-text-primary">
-                            <ActiveTabTitle />
-                        </h2>
-                        {activeTab !== 'incidents' && (
-                             <ClockButtons 
-                                user={user} 
-                                isClockedIn={isClockedIn} 
-                                onUpdate={fetchData}
-                            />
-                        )}
-                    </div>
-                    <div className="border-b border-border-color">
-                        <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                            <TabButton tabName="attendance" label="Attendance" />
-                            <TabButton tabName="idle" label="Idle Time" />
-                            <TabButton tabName="incidents" label="Incident Reports" />
-                        </nav>
-                    </div>
-                    <div className="mt-4">
-                        {activeTab === 'attendance' && <HistoryTable records={filteredRecords} />}
-                        {activeTab === 'idle' && <IdleHistoryTable records={filteredIdleRecords} />}
-                        {activeTab === 'incidents' && <IncidentReports user={user} initialReports={incidentReports} onUpdate={fetchData} />}
-                    </div>
+
+              <div className="bg-white p-4 sm:p-6 rounded-xl border border-border-color shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                  <h2 className="text-xl font-semibold text-text-primary">
+                    <ActiveTabTitle />
+                  </h2>
+                  {activeTab !== 'incidents' && (
+                    <ClockButtons
+                      user={user}
+                      isClockedIn={isClockedIn}
+                      onUpdate={fetchData}
+                    />
+                  )}
                 </div>
+                <div className="border-b border-border-color">
+                  <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                    <TabButton tabName="attendance" label="Attendance" />
+                    <TabButton tabName="idle" label="Idle Time" />
+                    <TabButton tabName="incidents" label="Incident Reports" />
+                  </nav>
+                </div>
+                <div className="mt-4">
+                  {activeTab === 'attendance' && <HistoryTable records={filteredRecords} />}
+                  {activeTab === 'idle' && <IdleHistoryTable records={filteredIdleRecords} />}
+                  {activeTab === 'incidents' && <IncidentReports user={user} initialReports={incidentReports} onUpdate={fetchData} />}
+                </div>
+              </div>
             </>
           )}
         </div>
       </main>
-      <IdleAlarm 
+      <Footer />
+      <IdleAlarm
         isActive={isClockedIn}
         user={user}
         currentAttendanceId={currentAttendanceId}
