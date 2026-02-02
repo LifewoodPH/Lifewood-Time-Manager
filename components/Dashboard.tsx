@@ -375,7 +375,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         </div>
       </div>
 
-      <div className="flex justify-center flex-shrink-0 px-4">
+      <div
+        className="flex justify-center flex-shrink-0 px-4 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        title="Scroll to top"
+      >
         <img src={logo} alt="Lifewood Logo" className="h-10 w-auto object-contain" />
       </div>
 
@@ -409,8 +413,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       <button
         onClick={() => setActiveTab(tabName)}
         className={`px-4 py-2 text-sm font-semibold rounded-t-md transition-colors focus:outline-none ${isActive
-            ? 'border-b-2 border-primary text-primary'
-            : 'text-text-secondary hover:text-text-primary'
+          ? 'border-b-2 border-primary text-primary'
+          : 'text-text-secondary hover:text-text-primary'
           }`}
         aria-current={isActive ? 'page' : undefined}
       >
