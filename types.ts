@@ -15,6 +15,7 @@ export interface AttendanceRecord {
   total_time: string | null;
   created_at: string;
   notes: string | null; // Added for session notes
+  last_heartbeat: string | null; // Added for offline detection
 }
 
 export interface IdleRecord {
@@ -28,16 +29,16 @@ export interface IdleRecord {
 }
 
 export interface IncidentReport {
-    id: string;
-    created_at: string; // Submission timestamp
-    user_id: string;
-    user_name: string;
-    subject: string;
-    body: string;
-    image_url: string | null;
-    status: 'submitted' | 'in_progress' | 'resolved';
-    incident_date: string;
-    work_hours: number | null;
+  id: string;
+  created_at: string; // Submission timestamp
+  user_id: string;
+  user_name: string;
+  subject: string;
+  body: string;
+  image_url: string | null;
+  status: 'submitted' | 'in_progress' | 'resolved';
+  incident_date: string;
+  work_hours: number | null;
 }
 
 // Basic Supabase schema typing for better type safety

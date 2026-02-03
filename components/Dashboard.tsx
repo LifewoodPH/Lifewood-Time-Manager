@@ -298,6 +298,40 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     };
   }, [isClockedIn, fetchData]);
 
+  // Heartbeat Effect: Update last_heartbeat every 5 seconds while clocked in
+  useEffect(() => {
+    let heartbeatInterval: ReturnType<typeof setInterval>;
+
+    if (isClockedIn) {
+      const sendHeartbeat = async () => {
+        // Only send heartbeat if online
+        if (!navigator.onLine) return;
+
+        const openRecord = records.find(r => r.clock_out === null);
+        if (openRecord) {
+          try {
+            await supabase
+              .from('attendance')
+              .update({ last_heartbeat: new Date().toISOString() })
+              .eq('id', openRecord.id);
+          } catch (error) {
+            console.error("Failed to send heartbeat:", error);
+          }
+        }
+      };
+
+      // Send immediately on mount/clock-in
+      sendHeartbeat();
+
+      // Then every 5 seconds
+      heartbeatInterval = setInterval(sendHeartbeat, 5000);
+    }
+
+    return () => {
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+    };
+  }, [isClockedIn, records]);
+
 
   const filterRecordsByDateRange = <T extends { clock_in?: string; idle_start?: string }>(recordsToFilter: T[], dateRange: { start: string; end: string }): T[] => {
     const { start, end } = dateRange;
