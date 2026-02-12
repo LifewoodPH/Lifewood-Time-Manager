@@ -112,86 +112,36 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     };
   }, [isClockedIn, records]);
 
-  // Constants for specific clock-out reasons
-  const BROWSER_CLOSE_NOTE = 'Browser session ended';
-  const USER_SIGNOUT_NOTE = 'User signed out';
-
-  // Check for recent browser close clock-out and RESUME session if it was just a refresh
   useEffect(() => {
-    const checkAndResumeSession = async () => {
-      // 1. Fetch the most recent attendance record
-      const { data, error: fetchError } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('user_id', user.userid) // Ensure we check THIS user's records
-        .order('clock_out', { ascending: false }) // Get most recently closed
-        .limit(1);
-
-      if (fetchError || !data || data.length === 0) return;
-
-      const latestRecords = data as AttendanceRecord[];
-      const lastRecord = latestRecords[0];
-
-      // 2. Check if it was a "Browser Close" event
-      if (lastRecord.clock_out && lastRecord.notes === BROWSER_CLOSE_NOTE) {
-        const clockOutTime = new Date(lastRecord.clock_out).getTime();
-        const now = new Date().getTime();
-        const timeDiff = now - clockOutTime;
-
-        // 3. If it was closed very recently (< 60 seconds), assume it was a refresh -> RESUME
-        if (timeDiff < 60000) {
-          console.log('Detecting page refresh: Resuming session...');
-
-          try {
-            const { error: resumeError } = await (supabase
-              .from('attendance') as any)
-              .update({
-                clock_out: null,
-                total_time: null,
-                notes: null // Clear the note
-              } as any)
-              .eq('id', lastRecord.id);
-
-            if (resumeError) throw resumeError;
-
-            // Update local state to reflect clocked-in status immediately
-            setIsClockedIn(true);
-            setRecords(prev => {
-              // Optimistically update the record in the list
-              return prev.map(r => r.id === lastRecord.id ? { ...r, clock_out: null, total_time: null, notes: null } : r);
-            });
-            console.log('Session resumed successfully');
-
-            // Re-fetch to ensure sync
-            fetchData();
-          } catch (err) {
-            console.error('Failed to resume session:', err);
-          }
-        }
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isClockedIn) {
+        const message = 'You are currently clocked in. Refreshing or closing this page will automatically clock you out. Are you sure you want to continue?';
+        event.preventDefault();
+        event.returnValue = message; // For legacy browsers
+        return message; // For modern browsers
       }
     };
 
-    checkAndResumeSession();
-  }, [user.userid, fetchData]); // Run strictly on mount/user change
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
-  // Always clock out on page hide (Close or Refresh)
-  // If it's a refresh, the logic above will resume it immediately on load.
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isClockedIn]);
+
   useEffect(() => {
     const handlePageHide = () => {
       if (isClockedIn) {
-        // We use the "records" state, but since this runs on unmount, we need the latest
-        // However, referencing "records" in dependency array causes re-attachments.
-        // It's fine here as we want the latest ID.
-
         const openRecord = records.find(r => r.clock_out === null);
         if (!openRecord) return;
 
+        // Prepare data for clocking out.
         const clockOutTime = formatDateForDB(new Date());
         const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
         const payload = {
           clock_out: clockOutTime,
           total_time: totalTime,
-          notes: BROWSER_CLOSE_NOTE, // Specific note for resume logic
+          notes: SYSTEM_INTERRUPTION_NOTE,
         };
 
         const supabaseUrl = 'https://szifmsvutxcrcwfjbvsi.supabase.co';
@@ -200,12 +150,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
         const headers = {
           'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Authorization': `Bearer ${supabaseAnonKey}`, // Use anon key
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal',
         };
 
-        // Standard robust clock-out
+        // Use `fetch` with `keepalive: true` to ensure the request is sent
+        // even after the page is closed/hidden. This is a "fire and forget" request.
         try {
           fetch(updateUrl, {
             method: 'PATCH',
@@ -214,13 +165,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             keepalive: true,
           });
         } catch (e) {
-          console.error("Auto clockout failed", e);
+          console.error("Fetch with keepalive failed during page hide.", e);
         }
       }
     };
 
     window.addEventListener('pagehide', handlePageHide);
-    return () => window.removeEventListener('pagehide', handlePageHide);
+
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+    };
   }, [isClockedIn, records]);
 
   const handleSignOut = async () => {
@@ -238,13 +192,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
 
         try {
-          const { error: updateError } = await (supabase
-            .from('attendance') as any)
+          const { error: updateError } = await supabase
+            .from('attendance')
             .update({
               clock_out: clockOutTime,
               total_time: totalTime,
-              notes: USER_SIGNOUT_NOTE,
-            } as any)
+              notes: SYSTEM_INTERRUPTION_NOTE,
+            })
             .eq('id', openRecord.id);
 
           if (updateError) throw updateError;
@@ -277,8 +231,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       const clockOutTime = formatDateForDB(clockOutDate);
       const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
 
-      const { error: updateError } = await (supabase
-        .from('attendance') as any)
+      const { error: updateError } = await supabase
+        .from('attendance')
         .update({
           clock_out: clockOutTime,
           total_time: totalTime,
@@ -357,8 +311,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         const openRecord = records.find(r => r.clock_out === null);
         if (openRecord) {
           try {
-            await (supabase
-              .from('attendance') as any)
+            await supabase
+              .from('attendance')
               .update({ last_heartbeat: new Date().toISOString() })
               .eq('id', openRecord.id);
             console.log('Heartbeat sent at', new Date().toISOString());
