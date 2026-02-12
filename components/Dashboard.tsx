@@ -112,30 +112,37 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     };
   }, [isClockedIn, records]);
 
+  // Track visibility state changes to differentiate refresh from close
+  const isRefreshingRef = useRef(false);
+
   useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (isClockedIn) {
-        const message = 'You are currently clocked in. Refreshing or closing this page will automatically clock you out. Are you sure you want to continue?';
-        event.preventDefault();
-        event.returnValue = message; // For legacy browsers
-        return message; // For modern browsers
+    const handleVisibilityChange = () => {
+      // When page becomes hidden, assume it might be a refresh if it becomes visible again quickly
+      if (document.visibilityState === 'hidden') {
+        isRefreshingRef.current = true;
+        // Reset after 100ms - if it was a refresh, page will reload; if close, doesn't matter
+        setTimeout(() => {
+          isRefreshingRef.current = false;
+        }, 100);
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isClockedIn]);
+  }, []);
 
+  // Clock out immediately on browser close (but not on refresh)
   useEffect(() => {
-    const handlePageHide = () => {
-      if (isClockedIn) {
+    const handlePageHide = (event: PageTransitionEvent) => {
+      // If persisted is true, it's likely going into bfcache (back/forward cache) - a navigation, not a close
+      // If isRefreshingRef is false, this is an actual browser close
+      if (isClockedIn && !event.persisted && !isRefreshingRef.current) {
         const openRecord = records.find(r => r.clock_out === null);
         if (!openRecord) return;
 
-        // Prepare data for clocking out.
         const clockOutTime = formatDateForDB(new Date());
         const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
         const payload = {
@@ -150,13 +157,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
         const headers = {
           'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`, // Use anon key
+          'Authorization': `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal',
         };
 
-        // Use `fetch` with `keepalive: true` to ensure the request is sent
-        // even after the page is closed/hidden. This is a "fire and forget" request.
         try {
           fetch(updateUrl, {
             method: 'PATCH',
@@ -170,10 +175,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       }
     };
 
-    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pagehide', handlePageHide as EventListener);
 
     return () => {
-      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pagehide', handlePageHide as EventListener);
     };
   }, [isClockedIn, records]);
 
