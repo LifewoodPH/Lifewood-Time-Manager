@@ -298,7 +298,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     };
   }, [isClockedIn, fetchData]);
 
-  // Heartbeat Effect: Update last_heartbeat every 5 seconds while clocked in
+  // Heartbeat Effect: Update last_heartbeat every 30 seconds while clocked in
+  // Works in background tabs (browser throttles to ~60s, which is acceptable)
   useEffect(() => {
     let heartbeatInterval: ReturnType<typeof setInterval>;
 
@@ -314,6 +315,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               .from('attendance')
               .update({ last_heartbeat: new Date().toISOString() })
               .eq('id', openRecord.id);
+            console.log('Heartbeat sent at', new Date().toISOString());
           } catch (error) {
             console.error("Failed to send heartbeat:", error);
           }
@@ -323,8 +325,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       // Send immediately on mount/clock-in
       sendHeartbeat();
 
-      // Then every 5 seconds
-      heartbeatInterval = setInterval(sendHeartbeat, 5000);
+      // Then every 30 seconds (browser may throttle to ~60s when tab is hidden)
+      heartbeatInterval = setInterval(sendHeartbeat, 30000);
+
+      // Page Visibility API: Send heartbeat when tab becomes visible again
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          console.log('Tab became visible, sending catch-up heartbeat');
+          sendHeartbeat();
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
 
     return () => {
