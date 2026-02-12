@@ -112,157 +112,110 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     };
   }, [isClockedIn, records]);
 
-  // Reliable refresh detection using sessionStorage
+  // Constants for specific clock-out reasons
+  const BROWSER_CLOSE_NOTE = 'Browser session ended';
+  const USER_SIGNOUT_NOTE = 'User signed out';
+
+  // Check for recent browser close clock-out and RESUME session if it was just a refresh
   useEffect(() => {
-    // 1. When the page loads, check if we were refreshing
-    const isRefreshing = sessionStorage.getItem('isRefreshing');
+    const checkAndResumeSession = async () => {
+      // 1. Fetch the most recent attendance record
+      const { data, error: fetchError } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('user_id', user.userid) // Ensure we check THIS user's records
+        .order('clock_out', { ascending: false }) // Get most recently closed
+        .limit(1);
 
-    // If we were refreshing, we just clear the flag and stay clocked in
-    if (isRefreshing) {
-      sessionStorage.removeItem('isRefreshing');
-    }
+      if (fetchError || !data || data.length === 0) return;
 
-    // 2. Before the page unloads (refresh or close), set the flag
-    const handleBeforeUnload = () => {
-      sessionStorage.setItem('isRefreshing', 'true');
-    };
+      const latestRecords = data as AttendanceRecord[];
+      const lastRecord = latestRecords[0];
 
-    // 3. Handle the actual clock-out logic
-    const handlePageHide = (event: PageTransitionEvent) => {
-      // If persisted is true, it's a bfcache navigation (back/forward button), not a close
-      if (event.persisted) return;
+      // 2. Check if it was a "Browser Close" event
+      if (lastRecord.clock_out && lastRecord.notes === BROWSER_CLOSE_NOTE) {
+        const clockOutTime = new Date(lastRecord.clock_out).getTime();
+        const now = new Date().getTime();
+        const timeDiff = now - clockOutTime;
 
-      // CRITICAL: We need to know if this is a refresh or a close
-      // The beforeunload event fires just before this.
-      // If it's a refresh, we want to keep the session.
-      // If it's a close, we want to clock out.
+        // 3. If it was closed very recently (< 60 seconds), assume it was a refresh -> RESUME
+        if (timeDiff < 60000) {
+          console.log('Detecting page refresh: Resuming session...');
 
-      // However, on actual browser CLOSE, we can't easily distinguish from refresh 
-      // purely by event order in all browsers. 
+          try {
+            const { error: resumeError } = await (supabase
+              .from('attendance') as any)
+              .update({
+                clock_out: null,
+                total_time: null,
+                notes: null // Clear the note
+              } as any)
+              .eq('id', lastRecord.id);
 
-      // ALTERNATIVE STRATEGY: 
-      // We ALWAYS clock out on pagehide relying on the "contingency" clock-out
-      // UNLESS we are 100% sure it is a refresh.
+            if (resumeError) throw resumeError;
 
-      // Wait! The user wants:
-      // - Refresh = NO clock out
-      // - Close = YES clock out
+            // Update local state to reflect clocked-in status immediately
+            setIsClockedIn(true);
+            setRecords(prev => {
+              // Optimistically update the record in the list
+              return prev.map(r => r.id === lastRecord.id ? { ...r, clock_out: null, total_time: null, notes: null } : r);
+            });
+            console.log('Session resumed successfully');
 
-      // Refined Logic:
-      // "isRefreshing" is set in beforeunload.
-      // In pagehide, we check strictly.
-
-      // Note: In some browsers, sessionStorage changes might not persist if set in beforeunload 
-      // and read in pagehide of the *same* unload cycle. 
-      // But usually, the "isRefreshing" flag is for the *next* load.
-
-      // Let's try a different approach:
-      // use the 'beforeunload' to DETECT intent.
-
-      // If we are refreshing, we DON'T want to trigger the clock-out fetch.
-    };
-
-    // Re-implementing with a simpler, more robust state approach
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    // We attach pagehide separately below to keep logic clean
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handlePageHide = () => {
-      // We can't check sessionStorage here reliably for the *current* action 
-      // because it might not have been written yet or is meant for the next page load.
-
-      // Instead, we rely on the implementation that:
-      // 1. Connection loss -> handled by heartbeat (3 min)
-      // 2. Browser close -> handled here (Immediate)
-
-      // The problem: How to NOT clock out on refresh?
-      // On refresh, the page unloads -> triggers pagehide -> clocks out.
-
-      // SOLUTION: We use the Navigation Timing API (if available) or 
-      // simpler: verify if we can send a "keep-alive" signal or just use the heartbeat?
-
-      // Actually, the user's previous issue "Clocked out when refreshed" means our 
-      // previous pagehide logic WAS triggering on refresh.
-      // "Did not clock out when closed" means it WASN'T triggering on close.
-
-      // Let's go back to basics.
-      // `beforeunload` fires for both.
-
-      // We need to differentiate.
-
-      if (isClockedIn) {
-        // Check if the document is hidden/visible state to guess? No, unreliable.
-
-        // Let's assume EVERYTHING is a close, EXCEPT if we set a specific flag.
-        // But we can't carry a JS variable across the refresh fast enough to stop the fetch?
-        // Actually, we can't stop the fetch if it's already queued.
-
-        // Let's use the 'visibilityState' check differently.
-        // When you CLOSE a tab, it becomes 'hidden'.
-        // When you REFRESH, it also unloads.
-
-        // What if we ONLY clock out if there is NO 'beforeunload' timestamp set?
-
-        // CORRECT FIX:
-        // We CANNOT perfectly distinguish close vs refresh reliably in `pagehide` 
-        // to trigger a synchronous fetch in all browsers.
-
-        // HOWEVER, we can use the Heartbeat as the primary mechanism for "Close" too,
-        // but the user wants "Immediate".
-
-        // Attempt 2: Use `navigator.sendBeacon` for robustness, and try to detect 
-        // valid navigation.
-
-        const isRefresh = sessionStorage.getItem('isRefreshing') === 'true';
-
-        // If we just set this in beforeunload, it might be readable here.
-        if (!isRefresh) {
-          // It's a CLOSE (or navigation away without beforeunload?? unlikely)
-          // Proceed to dock out.
-
-          const openRecord = records.find(r => r.clock_out === null);
-          if (openRecord) {
-            const clockOutTime = formatDateForDB(new Date());
-            const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
-            const payload = {
-              clock_out: clockOutTime,
-              total_time: totalTime,
-              notes: SYSTEM_INTERRUPTION_NOTE,
-            };
-
-            const supabaseUrl = 'https://szifmsvutxcrcwfjbvsi.supabase.co';
-            const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aWZtc3Z1dHhjcmN3ZmpidnNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjcwNzEsImV4cCI6MjA3NTYwMzA3MX0.hvZKMI0NDQ8IdWaDonqmiyvQu-NkCN0nRHPjn0isoCA';
-            const updateUrl = `${supabaseUrl}/rest/v1/attendance?id=eq.${openRecord.id}`;
-
-            // Using fetch with keepalive is standard for this
-            try {
-              fetch(updateUrl, {
-                method: 'PATCH',
-                headers: {
-                  'apikey': supabaseAnonKey,
-                  'Authorization': `Bearer ${supabaseAnonKey}`,
-                  'Content-Type': 'application/json',
-                  'Prefer': 'return=minimal',
-                },
-                body: JSON.stringify(payload),
-                keepalive: true,
-              });
-            } catch (e) {
-              console.error("Auto clockout failed", e);
-            }
+            // Re-fetch to ensure sync
+            fetchData();
+          } catch (err) {
+            console.error('Failed to resume session:', err);
           }
         }
-        // If isRefresh IS true, we do nothing. The session stays open.
-        // The new page loads, clears the flag, and resumes heartbeats.
+      }
+    };
 
-        // CLEANUP: We must clear the flag immediately so it doesn't persist for a real close later.
-        // But we can't clear it HERE, or it won't work for the reload.
-        // We clear it on MOUNT (see above).
+    checkAndResumeSession();
+  }, [user.userid, fetchData]); // Run strictly on mount/user change
+
+  // Always clock out on page hide (Close or Refresh)
+  // If it's a refresh, the logic above will resume it immediately on load.
+  useEffect(() => {
+    const handlePageHide = () => {
+      if (isClockedIn) {
+        // We use the "records" state, but since this runs on unmount, we need the latest
+        // However, referencing "records" in dependency array causes re-attachments.
+        // It's fine here as we want the latest ID.
+
+        const openRecord = records.find(r => r.clock_out === null);
+        if (!openRecord) return;
+
+        const clockOutTime = formatDateForDB(new Date());
+        const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
+        const payload = {
+          clock_out: clockOutTime,
+          total_time: totalTime,
+          notes: BROWSER_CLOSE_NOTE, // Specific note for resume logic
+        };
+
+        const supabaseUrl = 'https://szifmsvutxcrcwfjbvsi.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aWZtc3Z1dHhjcmN3ZmpidnNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjcwNzEsImV4cCI6MjA3NTYwMzA3MX0.hvZKMI0NDQ8IdWaDonqmiyvQu-NkCN0nRHPjn0isoCA';
+        const updateUrl = `${supabaseUrl}/rest/v1/attendance?id=eq.${openRecord.id}`;
+
+        const headers = {
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        };
+
+        // Standard robust clock-out
+        try {
+          fetch(updateUrl, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(payload),
+            keepalive: true,
+          });
+        } catch (e) {
+          console.error("Auto clockout failed", e);
+        }
       }
     };
 
@@ -285,13 +238,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
 
         try {
-          const { error: updateError } = await supabase
-            .from('attendance')
+          const { error: updateError } = await (supabase
+            .from('attendance') as any)
             .update({
               clock_out: clockOutTime,
               total_time: totalTime,
-              notes: SYSTEM_INTERRUPTION_NOTE,
-            })
+              notes: USER_SIGNOUT_NOTE,
+            } as any)
             .eq('id', openRecord.id);
 
           if (updateError) throw updateError;
@@ -324,8 +277,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       const clockOutTime = formatDateForDB(clockOutDate);
       const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
 
-      const { error: updateError } = await supabase
-        .from('attendance')
+      const { error: updateError } = await (supabase
+        .from('attendance') as any)
         .update({
           clock_out: clockOutTime,
           total_time: totalTime,
@@ -404,8 +357,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         const openRecord = records.find(r => r.clock_out === null);
         if (openRecord) {
           try {
-            await supabase
-              .from('attendance')
+            await (supabase
+              .from('attendance') as any)
               .update({ last_heartbeat: new Date().toISOString() })
               .eq('id', openRecord.id);
             console.log('Heartbeat sent at', new Date().toISOString());
