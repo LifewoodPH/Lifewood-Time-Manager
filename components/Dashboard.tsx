@@ -19,7 +19,6 @@ interface DashboardProps {
   onLogout: () => void;
 }
 
-const OFFLINE_CLOCK_OUT_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 const SYSTEM_INTERRUPTION_NOTE = 'System clock out due to interruption';
 
 const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
@@ -34,8 +33,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [isConfirmingSignOut, setIsConfirmingSignOut] = useState(false);
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
   const [activeTab, setActiveTab] = useState<'attendance' | 'idle' | 'incidents'>('attendance');
-  const [showOfflineWarning, setShowOfflineWarning] = useState<boolean>(false);
-  const offlineSinceRef = useRef<Date | null>(null);
+
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -254,100 +252,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     }
   };
 
-  // Effect to handle online/offline status for automatic clock-out
-  useEffect(() => {
-    const handleOnline = () => {
-      setShowOfflineWarning(false);
 
-      if (offlineSinceRef.current && isClockedIn) {
-        const offlineDuration = new Date().getTime() - offlineSinceRef.current.getTime();
-        if (offlineDuration >= OFFLINE_CLOCK_OUT_THRESHOLD_MS) {
-          console.log(`Offline for ${offlineDuration / 1000}s. Auto-clocking out.`);
-          handleForceClockOut(
-            SYSTEM_INTERRUPTION_NOTE,
-            offlineSinceRef.current // Use the time when connection was lost
-          );
-        }
-      }
-      // Always reset the ref on reconnection
-      offlineSinceRef.current = null;
-    };
-
-    const handleOffline = () => {
-      if (isClockedIn) {
-        setShowOfflineWarning(true);
-        // Only set the timestamp if it's the first time we've detected being offline
-        if (!offlineSinceRef.current) {
-          offlineSinceRef.current = new Date();
-          console.log('Connection lost, started offline timer at:', offlineSinceRef.current);
-        }
-      }
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Initial check in case the app loads while offline
-    if (!navigator.onLine) {
-      handleOffline();
-    }
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [isClockedIn, fetchData]);
-
-  // Heartbeat Effect: Update last_heartbeat every 30 seconds while clocked in
-  // Works in background tabs (browser throttles to ~60s, which is acceptable)
-  useEffect(() => {
-    let heartbeatInterval: ReturnType<typeof setInterval>;
-
-    if (isClockedIn) {
-      const sendHeartbeat = async () => {
-        // Only send heartbeat if online
-        if (!navigator.onLine) return;
-
-        const openRecord = records.find(r => r.clock_out === null);
-        if (openRecord) {
-          try {
-            await supabase
-              .from('attendance')
-              .update({ last_heartbeat: new Date().toISOString() })
-              .eq('id', openRecord.id);
-            console.log('Heartbeat sent at', new Date().toISOString());
-          } catch (error) {
-            console.error("Failed to send heartbeat:", error);
-          }
-        }
-      };
-
-      // Send immediately on mount/clock-in
-      sendHeartbeat();
-
-      // Then every 30 seconds (browser may throttle to ~60s when tab is hidden)
-      heartbeatInterval = setInterval(sendHeartbeat, 30000);
-
-      // Page Visibility API: Send heartbeat when tab becomes visible again
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible') {
-          console.log('Tab became visible, sending catch-up heartbeat');
-          sendHeartbeat();
-        }
-      };
-
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-
-      return () => {
-        if (heartbeatInterval) clearInterval(heartbeatInterval);
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      };
-    }
-
-    return () => {
-      if (heartbeatInterval) clearInterval(heartbeatInterval);
-    };
-  }, [isClockedIn, records]);
 
 
   const filterRecordsByDateRange = <T extends { clock_in?: string; idle_start?: string }>(recordsToFilter: T[], dateRange: { start: string; end: string }): T[] => {
@@ -489,16 +394,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       <main className="p-4 sm:p-6 lg:p-8 flex-grow">
         <div className="max-w-7xl mx-auto space-y-8">
 
-          {showOfflineWarning && (
-            <div className="p-4 text-center text-amber-800 bg-amber-100 border border-amber-200 rounded-lg flex items-center justify-center space-x-3">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span>
-                Connection lost. If you remain offline for over 5 minutes, you will be automatically clocked out.
-              </span>
-            </div>
-          )}
+
           {error && <div className="p-4 text-center text-red-700 bg-red-100 border border-red-200 rounded-lg">{error}</div>}
 
           {isLoading ? (

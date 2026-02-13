@@ -23,7 +23,6 @@ const ClockButtons: React.FC<ClockButtonsProps> = ({ user, isClockedIn, onUpdate
       const { error: dbError } = await supabase.from('attendance').insert({
         user_id: user.userid,
         clock_in: clockInTime,
-        last_heartbeat: clockInTime,
       });
 
       if (dbError) throw dbError;

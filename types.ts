@@ -15,7 +15,6 @@ export interface AttendanceRecord {
   total_time: string | null;
   created_at: string;
   notes: string | null; // Added for session notes
-  last_heartbeat: string | null; // Added for offline detection
 }
 
 export interface IdleRecord {
