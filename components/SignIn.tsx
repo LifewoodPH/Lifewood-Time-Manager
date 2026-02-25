@@ -87,7 +87,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
       </video>
 
       {/* Full-screen overlay to ensure base legibility and provide the unified white glass base */}
-      <div className="absolute inset-0 bg-white/75 backdrop-blur-md z-0 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-0 pointer-events-none"></div>
 
       <div className="relative z-10 w-full flex min-h-screen">
         {/* Left side: Sign In Form */}
