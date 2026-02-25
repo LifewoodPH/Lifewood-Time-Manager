@@ -368,9 +368,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     return (
       <button
         onClick={() => setActiveTab(tabName)}
-        className={`px-4 py-2 text-sm font-semibold rounded-t-md transition-colors focus:outline-none ${isActive
-          ? 'border-b-2 border-primary text-primary'
-          : 'text-text-secondary hover:text-text-primary'
+        className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all focus:outline-none ${isActive
+          ? 'bg-primary text-white shadow-md transform scale-105'
+          : 'text-text-secondary hover:text-text-primary hover:bg-gray-100'
           }`}
         aria-current={isActive ? 'page' : undefined}
       >
@@ -389,7 +389,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#F8FAFC] to-[#ECFDF5] relative">
       <Header />
       <main className="p-4 sm:p-6 lg:p-8 flex-grow">
         <div className="max-w-7xl mx-auto space-y-8">
@@ -445,11 +445,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                     />
                   )}
                 </div>
-                <div className="border-b border-border-color">
-                  <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                <div className="border-b border-gray-100 pb-4 mb-4">
+                  <nav className="-mb-px flex space-x-4" aria-label="Tabs">
                     <TabButton tabName="attendance" label="Attendance" />
-                    <TabButton tabName="idle" label="Idle Time" />
-                    <TabButton tabName="incidents" label="Incident Reports" />
+                    <TabButton tabName="idle" label="Idle" />
+                    <TabButton tabName="incidents" label="Incidents" />
                   </nav>
                 </div>
                 <div className="mt-4">
