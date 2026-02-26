@@ -106,7 +106,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
               <form onSubmit={handleSignIn} className="space-y-5">
                 <div>
                   <label htmlFor="userid" className="block text-sm font-semibold text-gray-700 mb-1">
-                    Email
+                    User
                   </label>
                   <input
                     id="userid"
