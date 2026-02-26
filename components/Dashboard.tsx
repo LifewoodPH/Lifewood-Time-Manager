@@ -322,7 +322,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   }, [isClockedIn, records]);
 
   const Header = () => (
-    <header className="flex items-center justify-between p-4 bg-white border-b border-border-color shadow-sm sticky top-0 z-10">
+    <header className="flex items-center justify-between p-4 bg-white border-b border-border-color shadow-sm sticky top-0 z-50">
       <div className="flex items-center space-x-3 flex-1">
         <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         <div>
