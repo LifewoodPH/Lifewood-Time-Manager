@@ -142,8 +142,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           notes: SYSTEM_INTERRUPTION_NOTE,
         };
 
-        const supabaseUrl = 'https://zbimmiyvlupzmklegvtp.supabase.co';
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpiaW1taXl2bHVwem1rbGVndnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNzE0MDksImV4cCI6MjA4NzY0NzQwOX0.RcwWg8vD1ZMjE48vYRH81JnnHb0n9QEXfp2-0WGX1Ys';
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
         const updateUrl = `${supabaseUrl}/rest/v1/attendance?id=eq.${openRecord.id}`;
 
         const headers = {
