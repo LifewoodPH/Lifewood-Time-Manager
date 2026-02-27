@@ -134,7 +134,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
                     type="password"
                     autoComplete="current-password"
                     required
-                    placeholder="••••••••"
+                    placeholder=" "
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition tracking-widest placeholder:tracking-widest"
