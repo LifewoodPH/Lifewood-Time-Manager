@@ -114,7 +114,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
                     type="text"
                     autoComplete="username"
                     required
-                    placeholder="hi@lifewood.com"
+                    placeholder=" "
                     value={userid}
                     onChange={(e) => setUserid(e.target.value)}
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
