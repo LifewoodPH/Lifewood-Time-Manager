@@ -71,15 +71,24 @@ const FAQButton: React.FC = () => {
         },
         {
             question: "When do I get clocked out automatically?",
-            answer: "If you are offline, or if you have clocked in for more than 8 hours then you have to clock in again counted as overtime, or if you are idle."
+            answer: (
+                <div className="space-y-1">
+                    <p>You may be automatically clocked out under the following conditions:</p>
+                    <ul className="list-disc pl-5 space-y-1 mt-1">
+                        <li><strong>Offline:</strong> If you lose internet connection and remain offline.</li>
+                        <li><strong>Over 8 Hours:</strong> If you have been clocked in for more than 8 hours (you must clock in again, which is counted as overtime).</li>
+                        <li><strong>Idle:</strong> If the system detects that you are idle for an extended period.</li>
+                    </ul>
+                </div>
+            )
         },
         {
-            question: "What should I do if I forget to clock in?",
-            answer: "Please contact your manager or HR to address missed clock-ins."
+            question: "How do I view my total hours worked?",
+            answer: "Your total hours for the current week are displayed on your Dashboard. You can also view a detailed daily breakdown in the Attendance section."
         },
         {
-            question: "How do I request a screenshot deletion?",
-            answer: "You can request review or deletion by contacting your supervisor."
+            question: "What happens if my internet connection drops?",
+            answer: "The time tracker will attempt to save your progress locally. Please reconnect as soon as possible to ensure all tracked time and data are synchronized with the server."
         }
     ];
 
@@ -132,9 +141,9 @@ const FAQButton: React.FC = () => {
                                         <span className="text-indigo-600 font-bold shrink-0">Q:</span>
                                         {faq.question}
                                     </h3>
-                                    <p className="text-sm text-gray-600 flex items-start gap-2 pl-6 leading-relaxed">
+                                    <div className="text-sm text-gray-600 flex items-start gap-2 pl-6 leading-relaxed w-full">
                                         {faq.answer}
-                                    </p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
