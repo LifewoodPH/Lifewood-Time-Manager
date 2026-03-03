@@ -4,6 +4,7 @@ import DisableDevtool from 'disable-devtool';
 import type { User } from './types';
 import SignIn from './components/SignIn';
 import Dashboard from './components/Dashboard';
+import FAQButton from './components/FAQButton';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -46,12 +47,13 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
       {user ? (
         <Dashboard user={user} onLogout={handleLogout} />
       ) : (
         <SignIn onLogin={handleLogin} />
       )}
+      <FAQButton />
     </div>
   );
 };
