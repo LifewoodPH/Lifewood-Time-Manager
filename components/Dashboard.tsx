@@ -97,6 +97,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           const now = new Date().getTime();
           const durationSeconds = Math.floor((now - clockInTime) / 1000);
           setElapsedTime(formatSecondsToHHMMSS(durationSeconds));
+
+          // 8 hours = 28800 seconds
+          if (durationSeconds >= 28800) {
+            handleForceClockOut("8 hours trigger auto clock out, clock in again for overtime.");
+            if (timer) clearInterval(timer);
+          }
         }, 1000);
       }
     } else {
