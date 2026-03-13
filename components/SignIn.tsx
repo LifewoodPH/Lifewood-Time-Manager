@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { User } from '../types';
 import logo from '../Public/logof.jpeg';
+import logo3 from '../Public/logo3.jpeg';
 
 interface SignInProps {
   onLogin: (user: User) => void;
@@ -94,11 +95,14 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
         <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 lg:p-16">
           <div className="w-full max-w-md mx-auto flex flex-col">
 
-            <div className="mb-10 text-center">
-              <h1 className="text-5xl lg:text-[4rem] font-bold mb-2 tracking-tight">
-                <span className="text-primary">Life</span>
-                <span className="text-accent">Time</span>
-              </h1>
+            <div className="mb-10 flex flex-col items-center text-center">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <img src={logo3} alt="LifeTime Logo" className="h-12 w-auto lg:h-16 object-contain animate-[spin_10s_linear_infinite]" />
+                <h1 className="text-5xl lg:text-[4rem] font-bold tracking-tight">
+                  <span className="text-primary">Life</span>
+                  <span className="text-accent">Time</span>
+                </h1>
+              </div>
               <p className="text-text-secondary text-lg lg:text-2xl mt-1 font-light">Lifewood Time Manager</p>
             </div>
 

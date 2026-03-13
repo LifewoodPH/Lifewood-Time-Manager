@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { User, AttendanceRecord, IdleRecord, IncidentReport } from '../types';
 import { supabase } from '../services/supabaseClient';
 import logo from '../Public/logof.jpeg';
+import logo3 from '../Public/logo3.jpeg';
 import SummaryCards from './SummaryCards';
 import HistoryTable from './HistoryTable';
 import IdleHistoryTable from './IdleHistoryTable';
@@ -330,7 +331,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const Header = () => (
     <header className="flex items-center justify-between p-4 bg-white border-b border-border-color shadow-sm sticky top-0 z-50">
       <div className="flex items-center space-x-3 flex-1">
-        <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <img src={logo3} alt="LifeTime Logo" className="h-8 w-auto object-contain animate-[spin_10s_linear_infinite]" />
         <div>
           <h1 className="text-xl font-bold text-text-primary">LifeTime</h1>
           <p className="text-sm text-text-secondary">Welcome, {user.name}!</p>
