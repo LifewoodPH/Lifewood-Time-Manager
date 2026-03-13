@@ -97,7 +97,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
 
             <div className="mb-10 flex flex-col items-center text-center">
               <div className="flex items-center justify-center gap-3 mb-2">
-                <img src={logo3} alt="LifeTime Logo" className="h-12 w-auto lg:h-16 object-contain animate-[spin_10s_linear_infinite]" />
+                <img src={logo3} alt="LifeTime Logo" className="h-[4.5rem] w-[4.5rem] lg:h-[5.5rem] lg:w-[5.5rem] object-cover mix-blend-multiply rounded-full animate-[spin_10s_linear_infinite]" />
                 <h1 className="text-5xl lg:text-[4rem] font-bold tracking-tight">
                   <span className="text-primary">Life</span>
                   <span className="text-accent">Time</span>
@@ -164,8 +164,8 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
             </div>
             {/* Footer with Logo */}
             <footer className="w-full flex flex-col items-center justify-center mt-14 pb-4">
-              <div className="bg-white border text-center border-gray-200 rounded-xl px-8 py-3 shadow-sm flex items-center justify-center mb-2">
-                <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
+              <div className="flex items-center justify-center mb-2">
+                <img src={logo} alt="Logo" className="h-8 w-auto object-contain mix-blend-multiply" />
               </div>
               <p className="text-xs font-bold text-gray-500">
                 Powered by <span className="text-primary font-bold">Lifewood PH</span>

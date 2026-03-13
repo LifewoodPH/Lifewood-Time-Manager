@@ -331,7 +331,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const Header = () => (
     <header className="flex items-center justify-between p-4 bg-white border-b border-border-color shadow-sm sticky top-0 z-50">
       <div className="flex items-center space-x-3 flex-1">
-        <img src={logo3} alt="LifeTime Logo" className="h-8 w-auto object-contain animate-[spin_10s_linear_infinite]" />
+        <img src={logo3} alt="LifeTime Logo" className="h-[3.25rem] w-[3.25rem] object-cover mix-blend-multiply rounded-full animate-[spin_10s_linear_infinite]" />
         <div>
           <h1 className="text-xl font-bold text-text-primary">LifeTime</h1>
           <p className="text-sm text-text-secondary">Welcome, {user.name}!</p>
@@ -343,7 +343,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         title="Scroll to top"
       >
-        <img src={logo} alt="Lifewood Logo" className="h-10 w-auto object-contain" />
+        <img src={logo} alt="Lifewood Logo" className="h-10 w-auto object-contain mix-blend-multiply" />
       </div>
 
       <div className="flex justify-end flex-1">
@@ -360,8 +360,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
   const Footer = () => (
     <footer className="flex flex-col justify-center items-center bg-transparent mt-auto py-6 border-t border-gray-100">
-      <div className="bg-white border border-border-color rounded-lg px-6 py-2 shadow-sm flex items-center justify-center mb-2">
-        <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
+      <div className="flex items-center justify-center mb-2">
+        <img src={logo} alt="Logo" className="h-8 w-auto object-contain mix-blend-multiply" />
       </div>
       <p className="text-xs font-bold">
         <span className="text-primary">Powered by </span>
