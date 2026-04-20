@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { User } from '../types';
-import logo from '../Public/logof.jpeg';
-import logo3 from '../Public/logo3.jpeg';
+import logo from '../public/lifewood.png';
+import logo3 from '../public/timeadmin.png';
 
 interface SignInProps {
   onLogin: (user: User) => void;

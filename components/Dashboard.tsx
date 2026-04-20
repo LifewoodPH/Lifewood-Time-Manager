@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { User, AttendanceRecord, IdleRecord, IncidentReport } from '../types';
 import { supabase } from '../services/supabaseClient';
-import logo from '../Public/logof.jpeg';
-import logo3 from '../Public/logo3.jpeg';
+import logo from '../public/lifewood.png';
+import logo3 from '../public/timeadmin.png';
 import SummaryCards from './SummaryCards';
 import HistoryTable from './HistoryTable';
 import IdleHistoryTable from './IdleHistoryTable';
