@@ -6,7 +6,7 @@ interface HistoryTableProps {
   records: AttendanceRecord[];
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 6;
 
 const HistoryTable: React.FC<HistoryTableProps> = ({ records }) => {
   const [currentPage, setCurrentPage] = useState(1);

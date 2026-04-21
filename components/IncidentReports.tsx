@@ -317,19 +317,29 @@ interface IncidentReportsProps {
     onUpdate: () => void;
 }
 
+const ITEMS_PER_PAGE = 6;
+
 const IncidentReports: React.FC<IncidentReportsProps> = ({ user, initialReports, onUpdate }) => {
     const [view, setView] = useState<'list' | 'form'>('list');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const handleFormSubmitSuccess = () => {
         onUpdate(); // Re-fetch all data, including new report
         setView('list'); // Switch back to list view
     };
 
+    const totalPages = Math.ceil(initialReports.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const currentReports = initialReports.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    const handlePrevious = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+    const handleNext = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+
     return (
-        <div>
+        <div className="flex flex-col h-full">
             {view === 'list' ? (
-                <div className="animate-fade-in-scale">
-                    <div className="flex justify-end mb-4">
+                <div className="animate-fade-in-scale flex flex-col h-full">
+                    <div className="flex justify-end mb-4 flex-shrink-0">
                         <button
                             onClick={() => setView('form')}
                             className="flex items-center justify-center space-x-2 px-4 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-md shadow-sm transition transform hover:-translate-y-0.5"
@@ -340,21 +350,81 @@ const IncidentReports: React.FC<IncidentReportsProps> = ({ user, initialReports,
                             <span>File New Report</span>
                         </button>
                     </div>
-                    {initialReports.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto no-scrollbar pb-4">
-                            {initialReports.map(report => <ReportCard key={report.id} report={report} />)}
-                        </div>
-                    ) : (
-                        <div className="text-center py-10 border-2 border-dashed border-border-color rounded-lg">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <p className="mt-4 text-text-secondary">You have not filed any incident reports.</p>
+                    
+                    <div className="flex-1 min-h-0">
+                        {initialReports.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+                                {currentReports.map(report => <ReportCard key={report.id} report={report} />)}
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 border-2 border-dashed border-border-color rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <p className="mt-4 text-text-secondary">You have not filed any incident reports.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="mt-auto pt-4 flex items-center justify-between border-t border-gray-100 sm:px-2">
+                            <div className="flex flex-1 justify-between sm:hidden">
+                                <button
+                                    onClick={handlePrevious}
+                                    disabled={currentPage === 1}
+                                    className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    onClick={handleNext}
+                                    disabled={currentPage === totalPages}
+                                    className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-700">
+                                        Showing <span className="font-medium">{startIndex + 1}</span> to <span className="font-medium">{Math.min(startIndex + ITEMS_PER_PAGE, initialReports.length)}</span> of{' '}
+                                        <span className="font-medium">{initialReports.length}</span> reports
+                                    </p>
+                                </div>
+                                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                    <button
+                                        onClick={handlePrevious}
+                                        disabled={currentPage === 1}
+                                        className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                                    >
+                                        <span className="sr-only">Previous</span>
+                                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                                        </svg>
+                                    </button>
+                                    <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                        Page {currentPage} of {totalPages}
+                                    </span>
+                                    <button
+                                        onClick={handleNext}
+                                        disabled={currentPage === totalPages}
+                                        className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                                    >
+                                        <span className="sr-only">Next</span>
+                                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </nav>
+                            </div>
                         </div>
                     )}
                 </div>
             ) : (
-                <IncidentReportWorkflow user={user} onCancel={() => setView('list')} onSubmitSuccess={handleFormSubmitSuccess} />
+                <div className="flex-1 overflow-y-auto no-scrollbar">
+                    <IncidentReportWorkflow user={user} onCancel={() => setView('list')} onSubmitSuccess={handleFormSubmitSuccess} />
+                </div>
             )}
         </div>
     );

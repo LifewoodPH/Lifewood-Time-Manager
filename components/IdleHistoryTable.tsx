@@ -6,7 +6,7 @@ interface IdleHistoryTableProps {
   records: IdleRecord[];
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 6;
 
 const IdleHistoryTable: React.FC<IdleHistoryTableProps> = ({ records }) => {
   const [currentPage, setCurrentPage] = useState(1);
