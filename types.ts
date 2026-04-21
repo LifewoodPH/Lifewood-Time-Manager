@@ -41,29 +41,38 @@ export interface IncidentReport {
 }
 
 // Basic Supabase schema typing for better type safety
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       users: {
         Row: User;
-        Insert: Omit<User, 'id'>;
+        Insert: User;
         Update: Partial<User>;
       };
       attendance: {
         Row: AttendanceRecord;
-        Insert: Omit<AttendanceRecord, 'id' | 'created_at'>;
-        Update: Partial<Omit<AttendanceRecord, 'id' | 'user_id' | 'created_at'>>;
+        Insert: Partial<AttendanceRecord> & { user_id: string; clock_in: string };
+        Update: Partial<AttendanceRecord>;
       };
       idle_time: {
         Row: IdleRecord;
-        Insert: Omit<IdleRecord, 'id' | 'created_at'>;
-        Update: Partial<Omit<IdleRecord, 'id' | 'user_id' | 'attendance_id' | 'created_at'>>;
+        Insert: Partial<IdleRecord> & { user_id: string; attendance_id: string; idle_start: string };
+        Update: Partial<IdleRecord>;
       };
       incident_reports: {
         Row: IncidentReport;
-        Insert: Omit<IncidentReport, 'id' | 'created_at'>;
-        Update: Partial<Omit<IncidentReport, 'id' | 'user_id'>>;
+        Insert: Partial<IncidentReport> & { user_id: string; user_name: string; subject: string; body: string; incident_date: string };
+        Update: Partial<IncidentReport>;
       }
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
     };
   };
 }

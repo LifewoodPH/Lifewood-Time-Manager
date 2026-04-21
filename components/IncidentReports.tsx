@@ -27,7 +27,7 @@ const StatusBadge: React.FC<{ status: IncidentReport['status'] }> = ({ status })
 
 // Incident Report Card Component
 const ReportCard: React.FC<{ report: IncidentReport }> = ({ report }) => (
-    <div className="bg-gray-50 p-4 rounded-lg border border-border-color hover:shadow-md transition-shadow">
+    <div className="bg-white p-4 rounded-xl border border-border-color shadow-[0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-lg transition-all duration-300">
         <div className="flex justify-between items-start">
             <h3 className="font-bold text-text-primary pr-2 break-words">{report.subject}</h3>
             <StatusBadge status={report.status} />
@@ -121,7 +121,7 @@ const IncidentReportWorkflow: React.FC<{
                 imageUrl = data.publicUrl;
             }
 
-            const { error: insertError } = await supabase.from('incident_reports').insert({
+            const { error: insertError } = await (supabase as any).from('incident_reports').insert({
                 user_id: user.userid,
                 user_name: user.name,
                 subject: formData.subject.trim(),
@@ -130,7 +130,7 @@ const IncidentReportWorkflow: React.FC<{
                 work_hours: formData.work_hours ? parseInt(formData.work_hours, 10) : null,
                 image_url: imageUrl,
                 status: 'submitted',
-            });
+            } as any);
 
             if (insertError) throw insertError;
             onSubmitSuccess();
@@ -341,7 +341,7 @@ const IncidentReports: React.FC<IncidentReportsProps> = ({ user, initialReports,
                         </button>
                     </div>
                     {initialReports.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto no-scrollbar pb-4">
                             {initialReports.map(report => <ReportCard key={report.id} report={report} />)}
                         </div>
                     ) : (

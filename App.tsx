@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import DisableDevtool from 'disable-devtool';
 import type { User } from './types';
 import SignIn from './components/SignIn';
@@ -12,20 +12,24 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Disable Developer Tools more aggressively using disable-devtool package
-    DisableDevtool();
+    // DisableDevtool();
 
-    setLoading(true);
-    try {
-      const storedUser = localStorage.getItem('lifetime-user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const checkSession = () => {
+      setLoading(true);
+      try {
+        const storedUser = localStorage.getItem('lifetime-user');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+        localStorage.removeItem('lifetime-user');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem('lifetime-user');
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    checkSession();
   }, []);
 
   const handleLogin = (loggedInUser: User) => {
@@ -47,14 +51,23 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen relative">
-      {user ? (
-        <Dashboard user={user} onLogout={handleLogout} />
-      ) : (
-        <SignIn onLogin={handleLogin} />
-      )}
-      <FAQButton />
-    </div>
+    <Router>
+      <div className="min-h-screen relative">
+        <Routes>
+          <Route 
+            path="/" 
+            element={user ? <Navigate to="/dashboard" replace /> : <SignIn onLogin={handleLogin} />} 
+          />
+          <Route 
+            path="/dashboard" 
+            element={user ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/" replace />} 
+          />
+          {/* Catch all redirect to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <FAQButton />
+      </div>
+    </Router>
   );
 };
 

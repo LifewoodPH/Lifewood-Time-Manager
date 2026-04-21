@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .liquid-glass {
+    @apply bg-white/75 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(4,98,65,0.08)];
+  }
+  .liquid-glass-dark {
+    @apply bg-[#046241]/85 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.15)] text-white;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}

@@ -50,33 +50,46 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ records }) => {
 
   }, [records]);
 
-  const SummaryCard = ({ title, time, icon }: { title: string; time: string; icon: React.ReactElement }) => (
-    <div className={`bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow duration-300 flex flex-col space-y-4 relative overflow-hidden`}>
-      {/* Decorative subtle background circle */}
-      <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/5 rounded-full blur-xl pointer-events-none"></div>
-
-      <div className="flex items-center space-x-4 relative z-10">
-        <div className={`p-3.5 rounded-xl bg-gradient-to-br from-green-50 to-emerald-100 text-primary shadow-sm border border-emerald-100/50`}>
-          {icon}
+  const GlassIcon = ({ icon, color = 'primary' }: { icon: React.ReactElement, color?: string }) => (
+    <div className="relative group shrink-0">
+      {/* 3D Depth Layers */}
+      <div className="absolute inset-0 bg-accent/20 rounded-2xl blur-xl group-hover:bg-accent/40 transition-colors duration-500"></div>
+      <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-white/40 backdrop-blur-md border border-white/60 shadow-[0_8px_32px_rgba(4,98,65,0.1)] overflow-hidden">
+        {/* Shine Effect */}
+        <div className="absolute -top-10 -left-10 w-20 h-20 bg-white/30 rounded-full blur-2xl"></div>
+        <div className="relative z-10 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-500">
+           {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { 
+             className: `h-7 w-7 text-primary filter drop-shadow-[0_2px_4px_rgba(4,98,65,0.2)]` 
+           })}
         </div>
-        <div>
-          <p className="text-gray-500 text-sm font-medium tracking-wide">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-0.5 tracking-tight">{time}</p>
+        {/* Bottom Inner Shadow for 3D feel */}
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-primary/5 to-transparent"></div>
+      </div>
+    </div>
+  );
+
+  const SummaryCard = ({ title, time, icon }: { title: string; time: string; icon: React.ReactElement }) => (
+    <div className={`liquid-glass p-4 rounded-[1.5rem] h-full flex flex-col justify-center hover:shadow-[0_12px_40px_rgba(4,98,65,0.1)] transition-all duration-500 relative overflow-hidden group border border-white/50 active:scale-[0.98]`}>
+      {/* Dynamic background glow that moves on card hover */}
+      <div className="absolute -right-8 -top-8 w-32 h-32 bg-accent/10 rounded-full blur-3xl group-hover:bg-accent/20 transition-all duration-700 pointer-events-none"></div>
+
+      <div className="flex flex-col xl:flex-row items-center xl:items-start text-center xl:text-left space-y-4 xl:space-y-0 xl:space-x-1.5 relative z-10 w-full">
+        <GlassIcon icon={icon} />
+        <div className="flex flex-col items-center xl:items-start justify-center flex-1 w-full pl-2">
+          <p className="text-gray-400 text-[0.65rem] font-black uppercase tracking-[0.2em] w-full xl:w-auto">{title}</p>
+          <p className="text-2xl lg:text-3xl font-black text-gray-900 tracking-tighter w-full xl:w-auto mt-0.5">{time}</p>
         </div>
       </div>
     </div>
   );
 
-  const iconClass = "h-6 w-6 text-primary";
-
   return (
-    <div>
-      <h2 className="text-xl font-semibold text-text-primary mb-4">Time Summary</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SummaryCard title="Today" time={summaries.today} icon={<svg xmlns="http://www.w3.org/2000/svg" className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} />
-        <SummaryCard title="This Week" time={summaries.week} icon={<svg xmlns="http://www.w3.org/2000/svg" className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m-9 9h18" /></svg>} />
-        <SummaryCard title="This Month" time={summaries.month} icon={<svg xmlns="http://www.w3.org/2000/svg" className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>} />
-        <SummaryCard title="This Year" time={summaries.year} icon={<svg xmlns="http://www.w3.org/2000/svg" className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h8a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.905 11l.92-2.301a2 2 0 013.84 0l.92 2.301M12 12a2 2 0 110-4 2 2 0 010 4z" /></svg>} />
+    <div className="flex flex-col h-full w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 w-full min-h-0">
+        <SummaryCard title="Today" time={summaries.today} icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" /></svg>} />
+        <SummaryCard title="This Week" time={summaries.week} icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>} />
+        <SummaryCard title="This Month" time={summaries.month} icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>} />
+        <SummaryCard title="This Year" time={summaries.year} icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} />
       </div>
     </div>
   );

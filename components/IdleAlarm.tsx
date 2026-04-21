@@ -181,21 +181,21 @@ const IdleAlarm: React.FC<IdleAlarmProps> = ({ isActive, user, currentAttendance
         let newIdleRecordId: string | null = null;
         
         if (user && currentAttendanceId) {
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
               .from('idle_time')
               .insert({
                 user_id: user.userid,
                 attendance_id: currentAttendanceId,
                 idle_start: formatDateForDB(idleStartTimeRef.current),
-              })
+              } as any)
               .select()
               .single();
 
             if (error) {
                 console.error("Failed to log idle start:", error);
             } else if (data) {
-                setCurrentIdleRecordId(data.id);
-                newIdleRecordId = data.id; // Capture the ID
+                setCurrentIdleRecordId((data as any).id);
+                newIdleRecordId = (data as any).id; // Capture the ID
             }
         }
         
@@ -217,12 +217,12 @@ const IdleAlarm: React.FC<IdleAlarmProps> = ({ isActive, user, currentAttendance
             }
 
             // Await the update to ensure it completes before clocking out
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('idle_time')
                 .update({
                     idle_end: formatDateForDB(idleEndTime),
                     duration_seconds: duration,
-                })
+                } as any)
                 .eq('id', newIdleRecordId);
             
             if (error) {
@@ -286,12 +286,12 @@ const IdleAlarm: React.FC<IdleAlarmProps> = ({ isActive, user, currentAttendance
             duration = Math.round((idleEndTime.getTime() - idleStartTimeRef.current.getTime()) / 1000);
         }
 
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from('idle_time')
             .update({
                 idle_end: formatDateForDB(idleEndTime),
                 duration_seconds: duration,
-            })
+            } as any)
             .eq('id', currentIdleRecordId);
         
         if (error) {

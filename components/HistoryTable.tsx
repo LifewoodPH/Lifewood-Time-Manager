@@ -19,8 +19,8 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ records }) => {
   const handleNext = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
 
   return (
-    <div className="flex flex-col">
-      <div className="overflow-x-auto rounded-t-lg border border-gray-200">
+    <div className="flex flex-col h-full">
+      <div className="overflow-x-auto no-scrollbar rounded-t-lg">
         {records.length > 0 ? (
           <table className="min-w-full divide-y divide-border-color">
             <thead className="bg-gray-50">

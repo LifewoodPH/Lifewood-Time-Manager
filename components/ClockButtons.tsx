@@ -20,7 +20,7 @@ const ClockButtons: React.FC<ClockButtonsProps> = ({ user, isClockedIn, onUpdate
     setError(null);
     try {
       const clockInTime = formatDateForDB(new Date());
-      const { error: dbError } = await supabase.from('attendance').insert({
+      const { error: dbError } = await (supabase as any).from('attendance').insert({
         user_id: user.userid,
         clock_in: clockInTime,
       });
@@ -39,7 +39,7 @@ const ClockButtons: React.FC<ClockButtonsProps> = ({ user, isClockedIn, onUpdate
     setIsLoading(true);
     setError(null);
     try {
-      const { data: openRecord, error: findError } = await supabase
+      const { data: openRecord, error: findError } = await (supabase as any)
         .from('attendance')
         .select('id, clock_in')
         .eq('user_id', user.userid)
@@ -48,19 +48,19 @@ const ClockButtons: React.FC<ClockButtonsProps> = ({ user, isClockedIn, onUpdate
         .limit(1)
         .single();
 
-      if (findError) throw new Error('Could not find an open clock-in record.');
-
+      if (findError || !openRecord) throw new Error('Could not find an open clock-in record.');
+      
       const clockOutTime = formatDateForDB(new Date());
       const totalTime = calculateDuration(openRecord.clock_in, clockOutTime);
 
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('attendance')
         .update({
           clock_out: clockOutTime,
           total_time: totalTime,
           notes: note.trim(),
         })
-        .eq('id', openRecord.id);
+        .eq('id', (openRecord as any).id);
 
       if (updateError) throw updateError;
       onUpdate();
@@ -94,14 +94,14 @@ const ClockButtons: React.FC<ClockButtonsProps> = ({ user, isClockedIn, onUpdate
   )
 
   return (
-    <div className="flex flex-col items-end">
+    <div className="flex flex-col items-start">
       <div className="flex items-center justify-center">
         {!isClockedIn ? (
           <ClockButton
             onClick={handleClockIn}
             text="Clock In"
             className="text-white bg-primary hover:bg-primary-hover"
-            icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>}
+            icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l4-4m0 0l-4-4m4 4H3m5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>}
           />
         ) : (
           <ClockButton

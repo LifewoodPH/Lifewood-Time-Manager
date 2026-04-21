@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { User } from '../types';
-import logo from '../public/lifewood.png';
-import logo3 from '../public/timeadmin.png';
+const logo = '/lifewood.png';
+const logo3 = '/timeadmin.png';
 
 interface SignInProps {
   onLogin: (user: User) => void;
@@ -39,11 +39,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
         .single();
 
       if (dbError) {
-        // Supabase's .single() throws an error if no user is found (code PGRST116).
-        // This is an expected failure for a wrong userid, not a system error.
-        // We'll show the generic login error message without logging a console error.
         if (dbError.code !== 'PGRST116') {
-          // Log other, unexpected database errors.
           console.error('Sign-in database error:', dbError);
         }
         setError('Invalid User ID or Password.');
@@ -52,19 +48,17 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
       }
 
       if (!data) {
-        // This is a fallback, as .single() should have already thrown an error.
         setError('Invalid User ID or Password.');
         setIsLoading(false);
         return;
       }
 
-      if (data.password === password) {
+      const userData = data as User;
+      if (userData.password === password) {
         // Successful login
-        // Exclude password from the user object stored in app state/localStorage
-        const { password: _, ...loggedInUser } = data;
-        onLogin(loggedInUser);
+        const { password: _, ...loggedInUser } = userData;
+        onLogin(loggedInUser as User);
       } else {
-        // Incorrect password
         setError('Invalid User ID or Password.');
       }
     } catch (err) {
@@ -84,11 +78,11 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
         playsInline
         className="absolute inset-0 w-full h-full object-cover z-0"
       >
-        <source src="https://www.pexels.com/download/video/10922866/" type="video/mp4" />
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-business-people-working-in-a-sunny-office-4330-large.mp4" type="video/mp4" />
       </video>
 
       {/* Full-screen overlay to ensure base legibility and provide the unified white glass base */}
-      <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-0 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-background/50 backdrop-blur-md z-0 pointer-events-none"></div>
 
       <div className="relative z-10 w-full flex min-h-screen">
         {/* Left side: Sign In Form */}
@@ -176,12 +170,12 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
 
         {/* Right side: Graphic Panel */}
         <div className="hidden lg:flex lg:w-1/2 p-6 lg:p-8 items-center justify-center relative z-10">
-          <div className="w-full h-full max-h-[92vh] max-w-2xl bg-[#034A36]/85 backdrop-blur-xl border border-white/20 rounded-[2rem] p-12 lg:p-16 flex flex-col justify-center relative overflow-hidden shadow-2xl">
+          <div className="w-full h-full max-h-[92vh] max-w-2xl liquid-glass-dark rounded-[2rem] p-12 lg:p-16 flex flex-col justify-center relative overflow-hidden">
             {/* Decorative text */}
             <div className="relative z-10 text-white max-w-lg mx-auto w-full">
               <h2 className="text-[3.5rem] leading-tight font-serif italic text-white/90">Master</h2>
               <h2 className="text-[4rem] leading-tight font-bold mb-4">Your Time</h2>
-              <p className="text-2xl text-[#8EBCAD] max-w-xs">
+              <p className="text-2xl text-accent drop-shadow-md max-w-xs">
                 Track your day,<br />seamlessly
               </p>
 
@@ -203,10 +197,10 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
                 </div>
 
                 {/* Main Horizontal Card */}
-                <div className="bg-[#EAF3EF] rounded-3xl p-8 shadow-2xl relative z-10 w-full max-w-[28rem] aspect-[1.6/1] text-gray-800 flex flex-col justify-between">
+                <div className="liquid-glass rounded-3xl p-8 shadow-[0_8px_32px_rgba(4,98,65,0.2)] relative z-10 w-full max-w-[28rem] aspect-[1.6/1] text-text-primary flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-6">
-                    <div className="w-10 h-10 rounded-full bg-[#B2C5CD] flex items-center justify-center">
-                      <svg className="w-5 h-5 text-[#7595AA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
