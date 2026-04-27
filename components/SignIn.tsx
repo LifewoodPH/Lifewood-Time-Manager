@@ -59,6 +59,11 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
       }
 
       if (data.password === password) {
+        if (data.is_frozen) {
+          setError('Your account has temporarily been deactivated by admin');
+          setIsLoading(false);
+          return;
+        }
         // Successful login
         // Exclude password from the user object stored in app state/localStorage
         const { password: _, ...loggedInUser } = data;
