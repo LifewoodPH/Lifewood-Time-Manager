@@ -99,9 +99,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           const durationSeconds = Math.floor((now - clockInTime) / 1000);
           setElapsedTime(formatSecondsToHHMMSS(durationSeconds));
 
-          // 8 hours = 28800 seconds
-          if (durationSeconds >= 28800) {
-            handleForceClockOut("8 hours trigger auto clock out, clock in again for overtime.");
+          // 9 hours = 32400 seconds
+          if (durationSeconds >= 32400) {
+            handleForceClockOut("You've reached the 9-hour session limit and have been clocked out automatically. Clock in again to resume.");
             if (timer) clearInterval(timer);
           }
         }, 1000);

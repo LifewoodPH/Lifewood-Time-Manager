@@ -76,7 +76,7 @@ const FAQButton: React.FC = () => {
                     <p>You may be automatically clocked out under the following conditions:</p>
                     <ul className="list-disc pl-5 space-y-1 mt-1">
                         <li><strong>Offline:</strong> If you lose internet connection and remain offline.</li>
-                        <li><strong>Over 8 Hours:</strong> If you have been clocked in for more than 8 hours (you must clock in again, which is counted as overtime).</li>
+                        <li><strong>Over 9 Hours:</strong> If you have been clocked in for more than 9 hours (you must clock in again, which is counted as overtime).</li>
                         <li><strong>Idle:</strong> If the system detects that you are idle for an extended period.</li>
                         <li><strong>Browser Closed/Refreshed:</strong> If you close the browser or refresh the page, your active session ends and you will need to clock in again.</li>
                     </ul>
